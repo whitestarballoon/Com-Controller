@@ -1,0 +1,15 @@
+To Remove:
+IgnoreChecksums defines
+
+To Check:
+Duplicate downlink routines
+
+To verify:
+Parameters OBqty and IBQty
+
+
+To split out into separate tool firmware:
+Sat modem parameter intialization
+
+To Add:
+Watchdog

@@ -1,3 +1,4 @@
+//Stuff for serial flash strings
 extern "C" int lprintf(char*, ...);
 extern "C" int lprintf_P(const char*, ...);	
 

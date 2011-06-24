@@ -63,6 +63,7 @@
 //***Uncomment this for serial checksum debugging
 //#define checkSumDebug
 
+//Output file object for serial debug statements
 static FILE mystdout = {0};
 
 /*******************************
@@ -106,11 +107,12 @@ const byte packetTypeIndex = 1;
 const byte packetLLstatusCodeIndex = 4;
 const byte packetRetStatusCodeIndex = 5;
 const byte packetDTEheader = 0x86;  //0x85 or 0x86 sets the type of packet error tracking
+//Configurable values for sat modem from here to break
 const byte serialRetryLimit = 1;
-const byte satIncomingPackLenLimit = 70;
+const byte satIncomingPackLenLimit = 70;    //Used to define length of buffer arrays for packet data
 const byte i2cRetryLimit = 10;
-const unsigned int maxTelemLenConst = 1024;
-const unsigned long satUplinkWaitDelayMillis = 60000;
+const unsigned int maxTelemLenConst = 1024;    //Maximum acceptable length of telemetry packet FROM EEPROM
+const unsigned long satUplinkWaitDelayMillis = 60000;  //Time in mS for the CommCtrlr to wait for inbound msgs after sending one
 const byte satParamQOBqty 0x16;
 const byte satParamQIBqty 0x15;
 
@@ -133,7 +135,7 @@ const byte i2cCmdCDNCUTDOWNNOW = 0x99;
 const byte i2cCmdSATPowerOn = 0xBB;
 const byte i2cCmdSATPowerOff = 0xAA;
 const byte i2cCmdGSPPrint = 0x05;
-const byte i2cDataLenConst = 15;
+const byte i2cDataLenConst = 15;  //I2C buffer length for cmd+data
 
 /*******************************
  *   Internal EEPROM Locations         *
@@ -144,7 +146,7 @@ const int EPLENcmdCounterArray = 76;  //76 byte array to store used received com
 const int EPLOCAtcReportPairArrayStart = 80;
 const int EPLOCAtcReportPairArray = 12;
 const int EPLOCI2CEEPLongMSGAddrArrayStart = 96;
-const int EPLOCI2CEEPLongMSGAddrArrayLen = 512;
+const int EPLOCI2CEEPLongMSGAddrArrayLen = 405;  //fill the rest of eeprom with the circular buffer for this array 
 
 
 /*******************************
@@ -171,17 +173,16 @@ PROGMEM prog_uchar satSetupWriteByteValues[]= {
 /*******************************
  *    Variable Declarations    *
  *******************************/
-byte messageRefNum=0;
-byte gwy_id = 1;
-byte satLatestPacNum=0;
-unsigned char packetBufferA[satIncomingPackLenLimit];
-unsigned char packetBufferB[satIncomingPackLenLimit];
-unsigned char packetBufferS[15];
-unsigned char packetSeqNum=0;
-unsigned char rxerr=0;
-boolean satAvailable;
-boolean tempBool;
-byte i2ccommand;
+byte messageRefNum=0;      									//MHA Message Num in RAM
+byte gwy_id = 1;											//Current destination message gateway 1=North Am.  120 = Europe/Afr 
+byte satLatestPacNum=0;										//Orbcomm Serial Protocol packet counter variable for incoming duplicate comparison
+unsigned char packetBufferA[satIncomingPackLenLimit];		//General long reusable scratch array
+unsigned char packetBufferB[satIncomingPackLenLimit];		//General long reusable scratch array
+unsigned char packetBufferS[15];							//General long reusable scratch array
+unsigned char packetSeqNum=0;								//Orbcomm Serial Protocol packet counter variable outbound
+unsigned char rxerr=0;										//Error types from serial packet receive functions will get put here
+boolean tempBool;											//Scratch
+byte i2ccommand;											
 byte i2cRXCommand[2]={
   0xFF,0xFF};                                      // Global variable for I2C Command Transmission
 byte i2cdata[2][i2cDataLenConst]; // Global variable for I2C Data
@@ -204,15 +205,15 @@ byte satMHANumReportA = 0xFF;  // Store the MHA Ref Num of Sat Queued ATC Report
 byte satMHANumReportB = 0xFF;  // Store the MHA Ref Num of Sat Queued ATC Report B
 byte satMsgTermClearoutCounter = 0;
 boolean satInboundMsgsCleared = false;
-boolean satSyncFlag = false;
+boolean satSyncFlag = false;									//Flag that will set when sat beacon is locked on to
 boolean prevSatSyncStateFlag = false;
 boolean satATCRptPairSittingInSatModemQueue = false;
 boolean satWaitingForUplinkCmdsFlag = false;
-unsigned long satWaitIsOverTime = 0;
+unsigned long satWaitIsOverTime = 0;							//Temp variable to place the end millis time in
 boolean satLongMsgStored = false;
-boolean satOBQueueEmpty = true;
+boolean satOBQueueEmpty = true;									//Indicates that there is either long or short msg in sat modem
 boolean satLongMsgInOBQ = false;
-byte satLongMsgInOBQMHA = 0xFF;
+byte satLongMsgInOBQMHA = 0xFF;									//MHA number of long message in the sat modem queue
 
 /*******************************
  *    Queue Ring Buffer Vars   *
@@ -228,6 +229,7 @@ NewSoftSerial sat(sat_tx,sat_rx);
 NewSoftSerial hf(etx1_tx,etx1_rx);
 NewSoftSerial cdn(etx2_tx,etx2_rx);
 
+//More stuff to allow flash-based debugging serial statements
 extern "C" int lprintf(char*, ...);
 extern "C" int lprintf_P(const char*, ...);	
 
@@ -269,6 +271,8 @@ void setup() {
    * Serial ports initialization
    *
    **********************/
+   
+//More stuff for flash string serial statements
     fdev_setup_stream(&mystdout,output_putchar,NULL,_FDEV_SETUP_WRITE);
 	stdout = &mystdout; //Required for printf init
 	
@@ -286,7 +290,7 @@ void setup() {
    *
    ********************/
   cdnInit();
-  satInitRoutine(0);  //0= skip setting init values, 1=Set a few params, 2= set most params.  Will power the modem on.  DO NOT COMMENT OUT
+  satInitRoutine(0);  //SETTINGS OTHER THAN 0 ARE DEPRECATED. 0= skip setting init values, 1=Set a few params, 2= set most params.  Will power the modem on.  DO NOT COMMENT OUT
   //satPrintAllParameters();
   i2cInitRoutine();   //Initialize i2c as a slave device
 
@@ -412,9 +416,10 @@ void loop() {
   while (timestart+1000>time){
     time = millis();
   }
-
 }
 
+
+//Stuff for flash serial debug
 static int output_putchar(char c, FILE *stream)
 {
     if (c == '\n') output_putchar('\r', stream);
