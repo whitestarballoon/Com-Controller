@@ -10,11 +10,9 @@ byte satProcessIncomingCommand (unsigned char* packetBufferLocal) {
 
   lprintf("CC: ProcessINCMD");
   #ifdef satDataDebug
-  Serial.println("SatRXCMD");
-  Serial.print("SatInCMD: ");
+  printf_P(PSTR("SatInCMD: "));
   for (byte i=0;i<0x0D;i++) {
-  Serial.print(packetBufferLocal[i],HEX);
-  Serial.print(" ");
+  printf_P(PSTR("%x "),packetBufferLocal[i]);
   }
   Serial.println();
   #endif
@@ -55,19 +53,19 @@ Example message, body is 2 ascii letters 'the'
 */   
 
      #ifdef satDataDebug
-	 Serial.print("InboundMSG: ");
+	 printf_P(PSTR("InboundMSG: "));
      lprintf("CC: ProcessINMSG");
 	 satPrintPacket(packetBufferLocal);
 	 #endif
 	 //Check that message type is binary and that there is no subject:
 	 if ((0x0E != packetBufferLocal[7]) && (0x00 != packetBufferLocal[6]) && (1 == packetBufferLocal[8])) {
 	 	// If either value isn't what we want, then this is not a message we want to read.
-	 	Serial.print("Invalid type or subj");
+	 	printf_P(PSTR("Invalid type or subj"));
 	 	return false;
 	 }
 	 //CHeck to see if incoming message I2C data section is too long
 	// if ((packLen> > 70) && (packLen < 15)){
-	  //  Serial.print("UplinkMSG toobig");
+	  //  printf_P(PSTR("UplinkMSG toobig"));
 	  //  return false;
 	// }
 	 //OK, now we know we have the correct format message
@@ -190,6 +188,7 @@ byte satProcessIncomingGG(unsigned char* packetBufferLocal,unsigned int packLen)
 void satConfirmTimerCHG(byte timerValue){
    Serial.println("SatConfirmTimerCHG");
    lprintf("CC: TXSatTimerChgConfirm");
+   packetSeqNum++;
     // Manual 6-byte report
    packetBufferS[0]= 0xFF;
    packetBufferS[1]= 0x01;  //Cutdown Timer Length Change command confirm indicator

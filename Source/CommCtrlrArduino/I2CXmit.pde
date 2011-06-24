@@ -7,16 +7,10 @@
 int I2CXmit(byte device, byte command, byte* data, int length)
 {
 #ifdef i2cDebug
-  Serial.print("~I2CXmit~\nto Addr: ");
-  Serial.println(device,HEX);
-  Serial.print("command: ");
-  Serial.println(command,HEX);
+  printf_P(PSTR("~I2CXmit~\nto Addr: %x\ncommand: %x"),device,command);
 
   for (byte i=0; i<length;i++) {
-    Serial.print("data: ");
-    Serial.print(i,DEC);
-    Serial.print(" ");
-    Serial.print(data[i],HEX);
+    printf_P(PSTR("index:%d data:%x  "),i,data[i]);
   }
   Serial.println();
 
@@ -37,20 +31,20 @@ int I2CXmit(byte device, byte command, byte* data, int length)
 
 /*
 void I2Csend(byte length) {
-  do                                                       // Sends data out on the I2C Bus
-  { 
-    i2csentStatus = I2CXmit(i2caddress, i2ccommand, i2cdata, length);     // Gets return value from endTransmission
-    delay(random(1,200));                                   // Random delay in case of delivary failure
-  } 
-  while (i2csentStatus != 0);                              // Continue until data arrives
-}
-*/
+ do                                                       // Sends data out on the I2C Bus
+ { 
+ i2csentStatus = I2CXmit(i2caddress, i2ccommand, i2cdata, length);     // Gets return value from endTransmission
+ delay(random(1,200));                                   // Random delay in case of delivary failure
+ } 
+ while (i2csentStatus != 0);                              // Continue until data arrives
+ }
+ */
 
 
 void i2cInitRoutine(){
   Wire.begin(i2cCommCtrl);                                   // Join I2C Bus as slave
   Wire.onReceive(i2cReceiveData);                            // Set On Receive Handler
-  Serial.println("I2C Init Done.");
+  printf_P(PSTR("I2C Init Done.\n"));
 }
 
 
@@ -59,24 +53,24 @@ void i2cInitRoutine(){
 void i2cReceiveData(int wireDataLen) {
   int i=0,dataArraySize;
   if (1 == i2cCmdsStored) {  
-  	//There's already an i2c command stored! O noes!
-  	i2cSel == 1;   //Store all the stuff in the #1 slot for i2c
+    //There's already an i2c command stored! O noes!
+    i2cSel == 1;   //Store all the stuff in the #1 slot for i2c
   } 
   else 
   {
-  i2cSel == 0;  //Store all the stuff in the #0 slot for i2c
+    i2cSel == 0;  //Store all the stuff in the #0 slot for i2c
   }
 #ifdef i2cDebug
-  Serial.println("i2c 4 me!");
+  printf_P(PSTR("i2c 4 me!\n"));
 #endif
 
-// Check to see if there's any I2C commands already 
-  
+  // Check to see if there's any I2C commands already 
+
   if ((wireDataLen -1) > i2cDataLenConst) {
-    Serial.println("\ni2cReceiveData: data too big!");
+    printf_P(PSTR("\ni2cRx: data too big!\n"));
     while(Wire.available() > 0)           // Loop to receive the Data from the I2C Bus
     {
-    Wire.receive();   // Finish receiving data and do not store.
+      Wire.receive();   // Finish receiving data and do not store.
     }
   }
   else
@@ -91,15 +85,11 @@ void i2cReceiveData(int wireDataLen) {
   }
 #ifdef i2cDebug
   // Printing code for debug usage                                                 
-  Serial.print("i2c Packet Rx'd. ");
-  Serial.print("Cmd: ");
-  Serial.print(i2cRXCommand[i2cSel], HEX);
-  Serial.print(" ");
-  Serial.print("Data: ");
+  printf_P(PSTR("i2c Packet Rx'd. Cmd: %x Data: "),i2cRXCommand[i2cSel]);
   for (int i = 0;i < i2cdataLen[i2cSel]; i++)
   {
-    Serial.print(i2cdata[i2cSel][i], HEX);
-    Serial.print(" ");
+    Serial.print(i2cdata[i2cSel][i], HEX));
+    printf_P(PSTR(" "));
   }
   Serial.println();
 #endif
@@ -109,35 +99,4 @@ void i2cReceiveData(int wireDataLen) {
 
 
 
-
-// Thist prints strings out the Ground Support Board by using i2c! Yay
-int lprintf(char *str, ...)
-{
-	long time;
-	long timestart;
-	char lstr[30];
-	uint8_t i2cSend[31];
-	int chars;
-	va_list args;
-
-	va_start(args, str);
-
-	chars = vsnprintf(lstr, 30, str, args);
-
-	if(chars > 30)
-	{
-		va_end(args);
-		return 1;
-	} else {
-	  I2CXmit(i2cGroundSupport, 0x05, (byte*)lstr, chars);
-		va_end(args);
-		return 0;
-	}
-  //Delay a bit for the GSP to catch up
-  time = millis();
-  timestart = time;
-  while (timestart+100>time){
-    time = millis();
-  }
-}
 

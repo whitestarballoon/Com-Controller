@@ -16,7 +16,7 @@
 boolean hfScanForReadySign(unsigned int timeToListen){
   hf.flush();  //Clear stale hf serial buffer
   for (byte i = 0; i<timeToListen; i++) {  //This loop keep checking for new serial data from HF 
-  if(hf.available()) {
+    if(hf.available()) {
       return true;  // Exit and return true if there's bytes waiting from the HF radio
     }
     delay (10); 
@@ -29,9 +29,9 @@ boolean hfScanForReadySign(unsigned int timeToListen){
 // Do check to see that hf.available is true before calling this please.
 //Wait for HF to be ready to receive command
 byte hfSendSerialCommand(unsigned char * packetBufferLocal, byte packLen) {
-   char tempChar = 0;
+  char tempChar = 0;
   if (hfScanForReadySign(1000)== false){
-   return false;  //Exit this routine, HF transmitter never got ready to receive command. 
+    return false;  //Exit this routine, HF transmitter never got ready to receive command. 
   }
   for (byte i = 0; i<100;i++) {
     while (hf.available()) {
@@ -46,10 +46,11 @@ byte hfSendSerialCommand(unsigned char * packetBufferLocal, byte packLen) {
 
     }
     delay(10);
-    }
   }
- 
- 
- //Update the internal variable for HF single telemetry channel
- void updateThreeNinersTelem(){
- }
+}
+
+
+//Update the internal variable for HF single telemetry channel
+void updateThreeNinersTelem(){
+}
+

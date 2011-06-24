@@ -4,33 +4,25 @@ void compareChecksums(){
   unsigned int testchk;
   byte i = 8;
 
-  Serial.print("Compare:"); 
+  printf_P(PSTR("Compare:")); 
   satPrintPacket(sampleLongMsg);
 
-  Serial.print("\nfletcher_decode whole: ");
+  printf_P(PSTR("\nfletcher_decode whole: "));
   testchk = fletcher_decode(sampleLongMsg,9);
-  Serial.print("    ");
-  Serial.println(testchk, HEX);
+  printf_P(PSTR("    %x\n"),testchk);
 
   sampleLongMsg[7] = 0; //reset checksum bytes
   sampleLongMsg[8] = 0;
 
-  Serial.print("fletcher_encode whole: ");
+  printf_P(PSTR("fletcher_encode whole: "));
   fletcher_encode(sampleLongMsg,(byte)9);
-  Serial.print(sampleLongMsg[7],HEX);
-  Serial.println(sampleLongMsg[8],HEX);
+  printf_P(PSTR("%x%x\n"),sampleLongMsg[7],sampleLongMsg[8]);
 
   sampleLongMsg[7] = 0; //reset checksum bytes
   sampleLongMsg[8] = 0;
 
 
-  Serial.print("Byte: ");
-  Serial.print(i,DEC);
-  Serial.print(" Value:");
-  Serial.print(sampleLongMsg[i], HEX);
-
-  Serial.print(" fe:");
-  Serial.println("\nOrig: ");
+  printf_P(PSTR("Byte: %d Value:%x fe:\nOrig: \n"),i,sampleLongMsg[i]);
   satPrintPacket(sampleLongMsg);		
   //Fletcher Decode Method
   fletcher_encode(sampleLongMsg,i+1);
@@ -47,9 +39,7 @@ void compareChecksums(){
     fletcherChk_step(sampleLongMsg[k]);
   }
   fletcherChk_stepOut();
-  Serial.print(" cs:");
-  Serial.println(checkSumB,HEX);
-  Serial.print(checkSumA,HEX);
+  printf_P(PSTR(" cs:%x%x"),checkSumB,checkSumA);
 
 
 
@@ -57,20 +47,17 @@ void compareChecksums(){
 */
 
 void satPrintPacket(unsigned char* packetBufferLocal){
-  //Serial.print("satPacket: ");
+  //printf_P(PSTR("satPacket: "));
   unsigned int packetLen=0;
   unsigned int a = packetBufferLocal[3];  // Put high byte in first
   packetLen = ((a << 8) + packetBufferLocal[2]);  // Shift high bits up, then Put low byte in 
-  //Serial.print("packLen = ");
-  //Serial.print(packetLen, DEC);
-  //Serial.print(" ");
+  //printf_P(PSTR("packLen = %d "),packetLen);
   for(unsigned int i=0; i<packetLen;i++){
-    Serial.print(packetBufferLocal[i],HEX);
-    Serial.print(" ");
+    printf_P(PSTR("%x "),packetBufferLocal[i]);
   }
 }
 
- 
+/* 
 //Print all parameters whatever the length, will generate errors as it just increments param number
 void satPrintAllParameters(){
   //Serial.println(" All Value Parameters from Digi m10, will have errors. Hex, nonpadded \nParam,Value");
@@ -78,24 +65,21 @@ void satPrintAllParameters(){
     if((i==0x1C)||(i==0x25)||(i==0x1A)||(i==0x24)||(i==0x26)||(i==0x2E)||(i==0x2F)){
       i++;
     }
-    Serial.print(i,HEX);
-    Serial.print(",");
+    printf_P(PSTR("%x,")i);
     byte temp = satGetListParameter(packetBufferB,i); 
 
     if (temp == 255){
       //Error status detected in packet status code, do not use
-      Serial.print(" Status Code Bad");
+      printf_P(PSTR(" Status Code Bad"));
     } 
     else {
       for (byte x=8;x<(temp+8);x++){  // 8 represents the start of the list in the full packet
-        Serial.print(packetBufferB[x],HEX);
-        Serial.print(" ");
-      }
+        printf_P(PSTR("%x "),packetBufferB[x]);
     }
     Serial.println(); 
   }
 }
-
+*/
 /************************
  *
  *    The following functions will not be used for flight code, only pre-flight testing
@@ -110,16 +94,15 @@ void satSetupParams() {
   //Iterate through stored parameters and values to initialize modem
   int arraysize = sizeof(satSetupWriteByteParams);
   for (int i=0;i<arraysize;i++){
-    Serial.print("SatParam ");
-    Serial.print(pgm_read_byte_near(satSetupWriteByteParams + i),HEX); 
+    printf_P(PSTR("SatParam %x"),pgm_read_byte_near(satSetupWriteByteParams + i); 
     do{
       satSetByteParameter(packetBufferB, pgm_read_byte_near(satInitializeParam + i),pgm_read_byte_near(satSetupWriteByteValues + i));
-      Serial.print(".");
+      printf_P(PSTR("."));
       satWaitReceiveOnePacket(packetBufferB);
 
     } 
     while (satCheckResponsePacket(packetBufferB) != true ) ;  //Check to see if we need to retry
-    Serial.println(" OK");  
+    printf_P(PSTR(" OK\n"));  
   }
 }
 
@@ -128,15 +111,12 @@ void satSetupParams() {
 void satPrintAllByteParameters(){
   byte currParam;
   byte currValue; 
-  //Serial.println(" All Byte Value Parameters from Digi m10\nParam,Value");
+  printf_P(PSTR(" All Byte Value Parameters from Digi m10\nParam,Value"));
   for (int z=0;z<0x34;z++){
     currParam = pgm_read_byte_near(satByteParams + z);
     currValue = satGetByteParameter(packetBufferB,currParam);
 
-    Serial.print(currParam,HEX);
-    Serial.print(",");
-    Serial.print(currValue,HEX);
-    Serial.println();
+    printf_P(PSTR("%x,%x\n"),currParam,currValue);
   }
 }
 
@@ -154,24 +134,23 @@ void satPrintAllByteParameters(){
  //Example of Getting a multibyte parameter:
  
  temp = satGetListParameter(packetBufferB,0x10); 
- //Serial.print("Gateways, Minimum Priority for each: ");
+ printf_P(PSTR("Gateways, Minimum Priority for each: "));
  for (byte i=8;i<(temp+8);i++){  // 8 represents the start of the list in the full packet
  Serial.print(packetBufferB[i],HEX);
- Serial.print(" ");
+ printf_P(PSTR(" "));
  }
- Serial.print(" , ");
+ printf_P(PSTR(" , "));
  
  temp = satGetListParameter(packetBufferB,0x11); 
  for (byte i=8;i<(temp+8);i++){  // 8 represents the start of the list in the full packet
  Serial.print(packetBufferB[i],HEX);
- Serial.print(" ");
+ printf_P(PSTR(" "));
  }
  //Serial.println();
  
  //Example of getting a byte parameter
  temp = satGetByteParameter(packetBufferB,0x16);  
- Serial.print("Msgs OB Queued: ");
- Serial.println(temp,DEC);
+ printf_P(PSTR("Msgs OB Queued: %d\n"),temp);
  
  
  }
@@ -193,7 +172,7 @@ void satPrintAllByteParameters(){
  if (sat.available()){
  satWaitReceiveOnePacket(packetBufferA);  //If there's serial data coming in, get it
  }
- Serial.print(".");
+ printf_P(PSTR("."));
  delay(100);
  }
  Serial.println("\nClearing RTS.");

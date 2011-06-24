@@ -10,7 +10,7 @@ void satInitRoutine(byte initParams) {
   digitalWrite(PWR_EN, HIGH);    // Turn sat power on
   //Read next message number from EEPROM
   messageRefNum = EEPROM.read(EPLOCmessageNum);
-  Serial.print("Msg #: ");
+  printf_P(PSTR("Msg #: "));
   Serial.println(messageRefNum, DEC);
   //delay(2000);
   //Initialize the Received Command Numbers Array to zeros
@@ -21,7 +21,7 @@ void satInitRoutine(byte initParams) {
   for (i=0;i<100;i++){    
     // DA pulse of the sat modem too hard to detect easily, just fixed time delay of about 10 seconds
     if (i%5 == 0){ //Modulo divide the loop counter to print a "." every 5 loops for UI
-      Serial.print("."); 
+      printf_P(PSTR(".")); 
     }
     delay(100);
   }
@@ -34,8 +34,7 @@ void satInitRoutine(byte initParams) {
     int arraysize = sizeof(satInitializeParam);
     for (int i=0;i<arraysize;i++){
       c=0;
-      Serial.print("SatParam ");
-      Serial.print(pgm_read_byte_near(satInitializeParam + i),HEX); 
+      printf_P(PSTR("SatParam %x"),pgm_read_byte_near(satInitializeParam + i)); 
       for(i=0;i<serialRetryLimit;i++)   {
         satSetByteParameter(packetBufferB, pgm_read_byte_near(satInitializeParam + i),pgm_read_byte_near(satInitializeValues + i));
         Serial.println(". ");
@@ -51,7 +50,7 @@ void satInitRoutine(byte initParams) {
 #ifdef satAccessAllParameters
     satSetupParams();
 #else
-    Serial.println("PLEASE UNDISABLE satAccessAllParameters");
+    Serial.println("SatInitError");
 #endif
   }
   Serial.println("SatInit Done");
@@ -73,11 +72,12 @@ byte satGetByteParameter(unsigned char* packetBufferLocal, unsigned char param){
     fletcher_encode ( packetBufferLocal, 8 );    // Calculate checksum
     satDataSend(packetBufferLocal, 8);
     satPacketReceptionist(packetBufferLocal);
-    if (rxerr == true ){  //Check to see if we have "no error" status response. If not, send again.
+    //printf_P(PSTR("rxerr: %d\n"),rxerr);
+    if (rxerr == 0 ){  //Check to see if we have "no error" status response. If not, send again.
       return packetBufferLocal[8];  //Return parameter value from packet, exiting this function
-
     }
   }
+  return packetBufferLocal[8];
   //Increment packetSeqNum if it exceeds serialRetryLimit
   packetSeqNum++;
 }
@@ -294,7 +294,9 @@ void satSendCommCommand(unsigned char* inputDataBuffer, unsigned char* packetBuf
 //       which is the Lat and Lon using ORBCOMM's proper compression format.
 //       packetBufferLocal - >14B long for scratch space.
 void satSendSCOrigPositionRpt(unsigned char* position, unsigned char* packetBufferLocal){
-  Serial.print("Sending SC ORB Pos Rpt\n");
+#ifdef actionLabels
+  printf_P(PSTR("Sending SC ORB Pos Rpt\n"));
+  #endif
   lprintf("CC:OrbPosRpt\n");
   for (byte i=0; i<serialRetryLimit;i++){
     packetBufferLocal[0] = packetDTEheader;
@@ -326,12 +328,16 @@ void satSendSCOrigPositionRpt(unsigned char* position, unsigned char* packetBuff
 
 
 void checkIfTimeToUpdateOrbPosition() {
-	//See if position has changed be lots
-	if (lastTimeOrbPositionRptSent + minutesBetweenOrbPositionRpts >= epochMinutes) {
-	     //Time to send position report!
-	     satSendSCOrigPositionRpt(latestPosition,packetBufferS);
-	     lastTimeOrbPositionRptSent = epochMinutes;  //Update the last time sent to now
-	}
+  //See if position has changed be lots
+  if ((lastTimeOrbPositionRptSent + minutesBetweenOrbPositionRpts) <= epochMinutes) {
+  #ifdef actionLabels
+    printf_P(PSTR("EPM:%d  LastPosTm:%d\n"),epochMinutes,lastTimeOrbPositionRptSent);
+    #endif
+    //Time to send position report!
+    packetSeqNum++;
+    satSendSCOrigPositionRpt(latestPosition,packetBufferS);
+    lastTimeOrbPositionRptSent = epochMinutes;  //Update the last time sent to now
+  }
 }
 
 
@@ -343,35 +349,29 @@ void satSendDirectlyFromI2CEEPROM(unsigned char* packetBufferLocal) {
   //initialize global checksum accumulation variables
   checkSumA = 0;
   checkSumB = 0;
-  
+
   //Serial.println("SatSendI2CEP");
   //Copy start and end address from i2cdata array
   //Start address
   unsigned int a = packetBufferLocal[0];  // Put high byte in first
-  //Serial.print("1a:");
-  //Serial.println(a,HEX);
+  //printf_P(PSTR("1a:%x\n"),a);
   startAddress = ((a << 8) + packetBufferLocal[1]);  // Shift high bits up, then Put low byte in 
-  //Serial.print("1(a<<8):");
-  //Serial.println((a<<8),HEX);
+  //printf_P(PSTR("1(a<<8):%x"),(a<<8));
   //End address
   a = packetBufferLocal[2];  // Put high byte in first
   endAddress = ((a << 8) + packetBufferLocal[3]);  // Shift high bits up, then Put low byte in 
-  Serial.print("startAddress: ");
-  Serial.print(startAddress, HEX);
-  Serial.print(" endAddress: ");
-  Serial.print(endAddress, HEX);
-
+  printf_P(PSTR("startAddress: %x endAddress: %x"),startAddress,endAddress);
   //Calculate length of message
   telemetryLength = endAddress-startAddress;
-  Serial.println(" tLen: ");
-  Serial.println(telemetryLength, DEC);
+  printf_P(PSTR(" telemetry string Len: %d\n"),telemetryLength);
   if (maxTelemLenConst < telemetryLength) {
-     //Send only up to sane length for really long messages.
-     lprintf("CC: MSG2long!, sending %d of %d\n", maxTelemLenConst, telemetryLength);
-     telemetryLength = maxTelemLenConst;  //Set length to the max allowable length
-     return;
-     
+    //Send only up to sane length for really long messages.
+    lprintf("CC: MSG2long!, sending %d of %d\n", maxTelemLenConst, telemetryLength);
+    telemetryLength = maxTelemLenConst;  //Set length to the max allowable length
+    return;
+
   }
+  printf_P(PSTR("MHA:%d"),messageRefNum);
   packetLen = 6 + telemetryLength + 2; // Total packet length including header and checksum 
   // Split length int into two bytes
   packetLenLowByte = (unsigned char) packetLen;
@@ -394,18 +394,22 @@ void satSendDirectlyFromI2CEEPROM(unsigned char* packetBufferLocal) {
     fletcherChk_step(packetBufferLocal[5]);			//Calculate rolling fletcher checksum
     //Send header bytes to sat modem
     satDataSend(packetBufferLocal,6);
+    #ifdef satDataDebug
     Serial.println("MsgToSat:");
+    #endif
     //Send data byte by byte to sat modem
     for(unsigned int g = 0; g<telemetryLength; g++ ) {
       unsigned int tempAddr = startAddress + g;
-    //  Serial.print(" tempAddr: ");
-    //  Serial.println(tempAddr,HEX);
+      //  printf_P(PSTR(" tempAddr: "));
+      //  Serial.println(tempAddr,HEX);
       tempDataByte = I2CeePROMRead(i2ceePROM,tempAddr);
       fletcherChk_step(tempDataByte);				//Calculate rolling fletcher checksum
       //Send byte to sat modem
       sat.print(tempDataByte);
+      #ifdef satDataDebug
       Serial.print(tempDataByte,HEX);
-      Serial.print(" ");
+      printf_P(PSTR(" "));
+      #endif
     }
     //Add two ending zeroes for Fletcher Checksum
     fletcherChk_step((byte)0);
@@ -424,5 +428,90 @@ void satSendDirectlyFromI2CEEPROM(unsigned char* packetBufferLocal) {
   EEPROM.write(EPLOCmessageNum,messageRefNum);
 }
 
+
+
+//Check to see that we haven't heard a real sat in a while, and then clear out the msgs in the inbound queue
+void satClearInboundMsgsIfNeeded(){
+  if(true == satSyncFlag) {  //if there's sat sync available, skip clearing msgs and reset counter
+    satMsgTermClearoutCounter=0;
+    satInboundMsgsCleared=false;
+    return; //exit this whole function
+  } 
+  else {
+    satMsgTermClearoutCounter++;  //If not in sat sync, increment the counter by one 
+  }
+  if((satMsgTermClearoutCounter > 240) && ( false == satInboundMsgsCleared) ){
+#ifdef satDataDebug
+    printf_P(PSTR("ClrInboundMsgs\n"));
+#endif
+    lprintf("CC:ClearMsgs\n");
+    packetBufferS[0]=20; //Clear all SC-Terminated Messages
+    packetBufferS[1]=0;
+    packetBufferS[2]=0;
+    packetBufferS[3]=0;
+    packetBufferS[4]=0;
+    packetBufferS[5]=0;
+    satSendCommCommand(packetBufferS,packetBufferB);
+    satMsgTermClearoutCounter=0;
+    satInboundMsgsCleared = true;
+    packetSeqNum++;
+  } 
+}
+void satAOSLOSAlert(){  //Signal Aquisition indicator
+  satSyncFlag = digitalRead(sat_sa);   //read sat available pin
+  if (satSyncFlag != prevSatSyncStateFlag) {
+    if(satSyncFlag == true){
+      printf_P(PSTR("AOS\n"));
+      lprintf("CC:AOS\n");
+    } 
+    else {
+      printf_P(PSTR("LOS\n"));
+      lprintf("CC:LOS\n");
+    }
+    prevSatSyncStateFlag = satSyncFlag;
+  }
+}
+
+//Send ATC reports or Long Msgs
+void satSendTelemIfAppropriate(){
+  //	Is there sat sync right now?
+  //	Are we waiting for uplink commands right now? (i.e. shouldn't be transmitting)
+  //Check for Satellite Availability to trigger sending telemetry
+  satSyncFlag = digitalRead(sat_sa);   //read sat available pin update
+  if ((true == satSyncFlag) && (false == satWaitingForUplinkCmdsFlag)) {
+      //	Is there an ATC report ready to transmit?
+      if (true == ATCRptReady) {   
+        //Read in the first gateway from sat
+        gwy_id = satGetByteParameter(packetBufferB,0x10);  
+        printf_P(PSTR("GetGwy:"),gwy_id);
+    	if ((0 != gwy_id) && (rxerr == 0)) {  //If there's a gateway listed that's not 0, there's a gateway to talk to
+        	if (satLongMsgInOBQ == true) {  //Test to see if there's a long message sitting in the q
+        		printf_P(PSTR("REMOVING LONG MSG MHA %d FROM SAT Q, WILL SEND LATER\n"),satLongMsgInOBQMHA); 
+        		//Remove long message from sat modem q and roll back pointers so it gets sent next time
+        		satQueueBackupOne();
+        	}
+        	//Send report here
+       		 satSendLatestStoredATCPkt();
+        	ATCRptReady = false;  //ATC Report has been sent.
+        	return;  //Do not continue, as there's no point in sending a long message when the ATC report just got sent.
+        }
+      }
+      satSyncFlag = digitalRead(sat_sa);   //read sat available pin update
+      //  LONG MESSAGE
+      //check to see if we're ok to send a Long message
+      if ((true == satLongMsgStored) && (true == satOBQueueEmpty) && (true == satSyncFlag)){
+      	//Read in the first gateway from sat
+      	
+      	gwy_id = satGetByteParameter(packetBufferB,0x10);  //Read in the first gateway from sat
+      	printf_P(PSTR("GetGwy: %d"),gwy_id);
+    	if ((0 != gwy_id) && (rxerr == 0)) {  //If there's a gateway listed that's not 0, there's a gateway to talk to
+        	satSendNextQueuedLongMSG(packetBufferS);
+        	satOBQueueEmpty = false;
+        	
+        }
+      }
+    }
+  
+}
 
 
