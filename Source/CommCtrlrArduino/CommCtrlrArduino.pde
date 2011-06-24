@@ -111,6 +111,8 @@ const byte satIncomingPackLenLimit = 70;
 const byte i2cRetryLimit = 10;
 const unsigned int maxTelemLenConst = 1024;
 const unsigned long satUplinkWaitDelayMillis = 60000;
+const byte satParamQOBqty 0x16;
+const byte satParamQIBqty 0x15;
 
 /*******************************
  *     Constants for I2C Commands to Comm Controller  *
@@ -346,7 +348,7 @@ void loop() {
   // This just makes sure any random info packets from sat modem get dealt with soon after they arrive 
   //  in the NewSoftSerial 64 byte buffer.  This should wait for new data for only 6 to 10 seconds. 
   //  Satcom should send anything that's waiting every 5 sec
-  while (sat.available()){
+  while (sat.available()){  //available means there's NewSoftSerial data buffered in from the sat modem
     satPacketReceptionist(packetBufferB);
   }  
 
@@ -362,7 +364,7 @@ void loop() {
   }
   satAOSLOSAlert();  //alert upon Aquisition of signal and Loss of signal
   satClearInboundMsgsIfNeeded();   // Clear inbound satellite messages from the sat modem internal queue whenever there's no sat signal
-  satSendTelemIfAppropriate();
+  satOutgoingMsgOperations();
 
 
 #ifdef mainLoopDebug

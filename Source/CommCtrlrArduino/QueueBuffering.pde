@@ -6,6 +6,7 @@ void satQueueBackupOne(){
 	//Remove the long message
     satClearOutgoingMHA(satLongMsgInOBQMHA);
 	EPLOCI2CEEPLongMSGAddrArrayDataStart = EPLOCI2CEEPLongMSGAddrArrayDataStartPREVIOUS; 
+	satLongMsgInOBQMHA = 0xFF;  //Set to the value that indicates there's not one stored in the sat q;
 	satLongMsgStored = true;
 	satLongMsgInOBQ = false;
 }
@@ -38,6 +39,8 @@ void satQueueI2CEEPROMLongMessage(unsigned char * addressArray) {
   }
 }
 
+
+//INPUT:  Scratch storage array SMALL
 void  satSendNextQueuedLongMSG(unsigned char* packetBufferLocal) {
   //Test to see if the queue is empty
   if (EPLOCI2CEEPLongMSGAddrArrayDataEnd != EPLOCI2CEEPLongMSGAddrArrayDataStart) {

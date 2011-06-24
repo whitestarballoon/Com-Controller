@@ -403,8 +403,14 @@ void satSaveATCPkt() {
     EEPROM.write(i+EPLOCAtcReportPairArrayStart,i2cdata[i2cSel][i]);  //Copy the ATC report data from the i2c command.
   }
   ATCRptReady = true;  //Indicate globally that a report is stored and ready.
-
   //Clear out any previous unsent ATC messages that are queued the sat modem
+  satClearATCPacketsFromSatQ();
+}
+
+
+void satClearATCPacketsFromSatQ(){
+  //Clear out any previous unsent ATC messages that are queued the sat modem
+  printf_P(PSTR("Clearing ATC if flags indicate there are ATC packets stored.\n"),satMHANumReportA);
   if (true == satATCRptPairSittingInSatModemQueue) { //Tests true if any ATC short reports still in modem queue
     
     if(0xFF != satMHANumReportA) {  //0xFF is the value set when the message has already been sent
@@ -419,9 +425,18 @@ void satSaveATCPkt() {
       printf_P(PSTR("ClrMHA%d\n"),satMHANumReportB);
       satClearOutgoingMHA(satMHANumReportB);
     }
+  } else {
+  printf_P(PSTR("According to flag satATCRptPairSittingInSatModemQueue == false\n"),satMHANumReportA);
   }
 }
 
+void satClearLongMessagefromSatQ() {
+	printf_P(PSTR("Check satLongMsgInOBQMHA flag:%d\n"),satLongMsgInOBQMHA);
+	if(true == satLongMsgInOBQ) {  
+		printf_P(PSTR("Clr Long Msg MHA:%d\n"),satLongMsgInOBQMHA);
+		satQueueBackupOne();  //Clear out the message in the queue
+		}
+}
 
 
 
@@ -451,10 +466,10 @@ void satSendLatestStoredATCPkt(){
   packetSeqNum++;
   satPacketReceptionist(packetBufferB); //See if any packet response is heard from satmodem
   satATCRptPairSittingInSatModemQueue = true;
-
+  ATCRptReady = false;  //ATC Report has been sent.
 }
 
-
+//Often the response to a CommCommand
 void satParseSysResp(unsigned char* packetBufferLocal) {
   /*
   5 - Origin type  3 = the Sat modem itself
@@ -542,5 +557,26 @@ void satClearOutgoingMHA(byte mhaNumber){
   satPacketReceptionist(packetBufferB);
 }
 
+boolean satHasATCPairBeenTXed() {
+	satGetMessageTransmissionStatus(satMHANumReportA);
+	satPacketReceptionist(packetBufferB);
+  	satGetMessageTransmissionStatus(satMHANumReportB);
+  	satPacketReceptionist(packetBufferB);
+}
 
+
+
+//Input:  MHA Message number to query sat modem for status of
+//Return: 
+byte satGetMessageTransmissionStatus(byte MHANumber) {
+	//Get MEssage Status Comm Command type code: 4 
+	packetBufferS[0]=4; //Request status of the given MHA # 
+    packetBufferS[1]=MHANumber; 
+    packetBufferS[2]=0;
+    packetBufferS[3]=0;
+    packetBufferS[4]=0;
+    packetBufferS[5]=0;
+	satSendCommCommand(packetBufferS, packetBufferA);
+	packetSeqNum++;
+}
 

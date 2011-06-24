@@ -258,8 +258,8 @@ void satSendDefaultMsg(unsigned char* inputDataBuffer, unsigned char* packetBuff
   EEPROM.write(EPLOCmessageNum,messageRefNum);
 }
 
-//Pass: inputdatabuffer of: type code, Value bytes 0,1,2,3, gwy_id
-//      packetBufferLocal - scratch 
+//Pass: inputdatabuffer 6 byte array of: type code, Value bytes 0,1,2,3, gwy_id
+//      packetBufferLocal - scratch byte array of 14 bytes
 void satSendCommCommand(unsigned char* inputDataBuffer, unsigned char* packetBufferLocal){
   for (byte i=0; i<serialRetryLimit;i++){
 
@@ -457,6 +457,8 @@ void satClearInboundMsgsIfNeeded(){
     packetSeqNum++;
   } 
 }
+
+
 void satAOSLOSAlert(){  //Signal Aquisition indicator
   satSyncFlag = digitalRead(sat_sa);   //read sat available pin
   if (satSyncFlag != prevSatSyncStateFlag) {
@@ -472,13 +474,73 @@ void satAOSLOSAlert(){  //Signal Aquisition indicator
   }
 }
 
-//Send ATC reports or Long Msgs
-void satSendTelemIfAppropriate(){
+//Master Outgoing message operations management
+//Includes queueing, clearing the queue, monitoring for sent status and prioritization
+void satOutgoingMsgOperations(){
   //	Is there sat sync right now?
   //	Are we waiting for uplink commands right now? (i.e. shouldn't be transmitting)
   //Check for Satellite Availability to trigger sending telemetry
-  satSyncFlag = digitalRead(sat_sa);   //read sat available pin update
-  if ((true == satSyncFlag) && (false == satWaitingForUplinkCmdsFlag)) {
+  if (LOW == digitalRead(sat_sa)){   //read sat available pin 
+	  //Is this a transition to LOW from previous HIGH?
+	  if (satSyncFlag) {  //If satSyncFlag is high and the pin is low, we've just transitioned
+	  	//Clear long message from sat modem here
+	  	satClearOutgoingMHA(satLongMsgInOBQMHA);
+	  	satSyncFlag = false);  //set Sync flag to actual state of pin, which is low
+	  } 
+	  return;  //Leave if there's no signal, nothing left to do.
+  } else {
+  satSyncFlag = true;
+  }
+  //Check for being in the delay timer
+  if (satWaitingForUplinkCmdsFlag) return;
+  //Read in the first gateway from sat
+  gwy_id = satGetByteParameter(packetBufferB,0x10);  
+  //Is Gateway 0?  if 0 then we have no gateway to talk to
+  if ((0 == gwy_id) || (rxerr != 0)) return;  // IF Gwy = 0 or there was an error, then just leave.
+  //Check to see if the sat queue is empty or not
+  if (0 == satGetByteParameter(satParamQOBqty)){  //Empty if zero
+  	// SatQ is EMPTY -------------------
+  	if (ATCRptReady) {  //Is a new ATC report Ready to send?
+  		//Yes there are ATC reports ready to send
+  		//LOAD ATC Report pair
+  		satSendLatestStoredATCPkt();
+  		return;
+  	} else {
+  		//No ATC report ready to send
+  		if(LongMsgReady) {  //Is there a new long Message waiting in the eeprom queue?
+  			//YES there is a new long message waiting in the eeprom queue
+  			//LOAD next Long message
+  			satSendNextQueuedLongMSG(packetBufferS);
+  		} else { 
+  			//NO there is no long message waiting in the eeprom queue
+  			return;
+  		}
+  	}
+  } else {  //SatQ NOT EMPTY -------------------
+  	// There are message(s) in the outbound queue
+  	if (ATCRptReady) {  //Is a new ATC report Ready to send?
+  		//Yes there are ATC reports ready to send
+  		//Clear SatQ of Old ATC Messages
+  		satClearATCPacketsFromSatQ();
+  		//Clear SatQ of Old Long Messages
+  		satClearLongMessagefromSatQ();
+  		//LOAD ATC Report pair
+  		satSendLatestStoredATCPkt();
+  		return;
+  	} else { 
+  		//NO there are no ATC reports ready to send
+  		//Is existing ATC pair sent from SatQ?
+  		satHasATCPairBeenTXed()  // <---  THIS FUNC NOT DONE
+  		
+  }
+  
+  
+  
+  
+  
+  // ------------- REMOVE STUFF BELOW HERE ---------- 
+  
+  
       //	Is there an ATC report ready to transmit?
       if (true == ATCRptReady) {   
         //Read in the first gateway from sat
@@ -511,7 +573,7 @@ void satSendTelemIfAppropriate(){
         }
       }
     }
-  
+  // =============  REMOVE STUFF ABOVE HERE ==================
 }
 
 
