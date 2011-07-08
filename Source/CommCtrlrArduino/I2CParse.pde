@@ -52,7 +52,7 @@ void I2CParse(byte command) {
     { 
       
       printf_P(PSTR("i2c LngMsgIn\n"));
-      //
+      //If Flight computer sends a pair of I2C EEPROM addresses that are the same, that's an error in the FC
       if((i2cdata[i2cSel][0] == i2cdata[i2cSel][2]) && (i2cdata[i2cSel][1] == i2cdata[i2cSel][3])){
         lprintf("CC:i2cEEPMsgAddrs same");
         printf_P(PSTR("i2cEEPMsgAddrs same\n"));
@@ -61,7 +61,7 @@ void I2CParse(byte command) {
       satQueueI2CEEPROMLongMessage(i2cdata[i2cSel]);
       break;
     }
-  case i2cCmdHFUpdtTelem: 
+  case i2cCmdHFUpdtTelem: //Untested
     { 
       packetBufferS[0]=i2cdata[i2cSel][0];
       packetBufferS[1]=i2cdata[i2cSel][1];
