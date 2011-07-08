@@ -3,6 +3,7 @@ To Remove:
 
 To Check:
 Duplicate downlink routines
+Make sure I2CXmit fuction return SentStatus is checked and gets retried if needed everywhere it's called
 
 To verify:
 Parameters OBqty and IBQty
@@ -13,3 +14,5 @@ Sat modem parameter intialization
 
 To Add:
 Watchdog
+Have CommCtrlr request ATC report from Flight Computer when it first gets sat lock instead of storing ATC report
+Have flight computer issue orbcomm position report on schedule as short report
