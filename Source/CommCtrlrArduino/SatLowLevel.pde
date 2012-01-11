@@ -83,8 +83,6 @@ void satSaveATCPkt() {
     EEPROM.write(i+EPLOCAtcReportPairArrayStart,i2cdata[i2cSel][i]);  //Copy the ATC report data from the i2c command.
   }
   ATCRptReady = true;  //Indicate globally that a report is stored and ready.
-  //Clear out any previous unsent ATC messages that are queued the sat modem
-  satClearATCPacketsFromSatQ();
 }
 
 

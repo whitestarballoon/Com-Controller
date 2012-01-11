@@ -44,8 +44,8 @@ void cdnCmdCUTDOWNNOW(){
     cdn.println("!CUTDOWNNOW");
     delay(100);
   }
-  packetBufferS[0]=0;  //No real Data
-  I2CXmit(i2cFlightComputer, 0x0F, packetBufferS, 0);//Send cutdown comm
+  packetBufferS[0]=0;  //empty I2c Data
+  I2CXmit(i2cFlightComputer, 0x0F, packetBufferS, 0);//Send cutdown notice to flight computer
   lprintf("CC:CUTDOWNNOW!");
   Serial.println("cdn!CUTDOWNNOW");
 }
@@ -63,7 +63,8 @@ void cdnCmdResetTimer() {
 void cdnCmdSet(unsigned char deadManTime) {
   printf_P(PSTR("\ncdn!TmrChg "));
   Serial.println(deadManTime,DEC);
-  // DO NOT TRY TO PRINT TO I2C IN CUTDOWN!  IT WILL FREEZE COMMCONTROLLER ON BOOT!
+  // DO NOT TRY TO PRINT TO I2C IN THIS FUNCTION!  IT WILL FREEZE 
+  //COMMCONTROLLER DURING BOOT SEQUENCE WHEN IT INITIALIZES CUTDOWN MODULE!
   for (byte i = 0; i<10; i++) {
     cdn.print("!T");
     // Zero pad the value for ASCII numbers to cutdown controller

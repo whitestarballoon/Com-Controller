@@ -29,7 +29,7 @@ void I2CParse(byte command) {
 #ifdef actionLabels
       printf_P(PSTR("\ni2c StoreATC\n"));
 #endif
-      lprintf("CC:LatestOrbPosUpdtd\nCC:StoreATCRpt\n");
+      lprintf("CC:StoreATCRpt\n");
       //Store Latest position and Epoch Time for later use
       latestPosition[0]=i2cdata[i2cSel][6];  //lat0
       latestPosition[1]=i2cdata[i2cSel][7];  //lat1
@@ -38,14 +38,7 @@ void I2CParse(byte command) {
       latestPosition[4]=i2cdata[i2cSel][1];  //lon1
       latestPosition[5]=i2cdata[i2cSel][2];  //lon2
       epochMinutes = word((i2cdata[i2cSel][4] & B00001111),i2cdata[i2cSel][5]);  //Copy epochMinute value into ram
-
-#ifdef sendOrbPositionRpts
-      checkIfTimeToUpdateOrbPosition();  //This will send an orb positiion rpt if enough time has elapsed since the last one
-#endif
       satSaveATCPkt(); //save the ATC packet to be ready to send when sat is ready to accept.
-
-
-
       break;
     } 
   case i2cCmdSATTxFrmEEPROM: 
@@ -105,22 +98,6 @@ void I2CParse(byte command) {
       updateThreeNinersTelem();
       break;
     }
-  case i2cCmdSetGwy:
-    {
-      if (( 1 == i2cdata[i2cSel][0]) || ( 120 == i2cdata[i2cSel][0])) {
-        gwy_id = i2cdata[i2cSel][0];  //Set gateway
-        satSetByteParameter(packetBufferB, (byte)0x01, (byte)gwy_id);
-        lprintf("CC: GWY CHGD TO %d\n", gwy_id);
-        printf_P(PSTR("CC: GWY CHGD TO %d\n"), gwy_id);
-      }
-      break;
-    }
-  case i2cCmdSendOrbPositRpt:
-    {
-      satSendSCOrigPositionRpt(latestPosition,packetBufferS);
-      break;
-    }
-    break;
   case i2cCmdCDNCUTDOWNNOW: 
     { 
       cdnCmdCUTDOWNNOW();
@@ -137,7 +114,7 @@ void I2CParse(byte command) {
     { 
       lprintf("CC: SATMODEM OFF\n");
       printf_P(PSTR("SATMODEM OFF\n"));
-      digitalWrite(PWR_EN,LOW);
+      satShutdownRoutine();
       break;
     }
 

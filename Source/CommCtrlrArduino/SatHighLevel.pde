@@ -1,12 +1,12 @@
-//Input: pass integer 0 = no parameter setup, 1 = minimal parameter setup, 2 = most parameter setup
+
 // Scratch space: PacketBufferB
-void satInitRoutine(byte initParams) {
+void satInitRoutine() {
   unsigned int i;
   byte c=0;
   Serial.println("SatInit");
   digitalWrite(PWR_EN, LOW);   // Turn off the Satcom
-  delay(5000);  // Let things settle
-  digitalWrite(PWR_EN, HIGH);    // Turn sat power on
+  delay(satPowerOffMinimumTime);  // Let sat modem settle while off
+  digitalWrite(PWR_EN, HIGH);    // Turn sat power back on
   //Initialize the Received Command Numbers Array to zeros
   for (i=EPLOCcmdCounterArrayStart;i<(EPLENcmdCounterArray + EPLOCcmdCounterArrayStart);i++) {
     EEPROM.write(i,0);
@@ -38,35 +38,28 @@ void satAOSLOSAlert(){  //Signal Aquisition indicator
 //Includes queueing, clearing the queue, monitoring for sent status and prioritization
 void satOutgoingMsgOperations(){
   //	Is there sat sync right now?
-  //	Are we waiting for uplink commands right now? (i.e. shouldn't be transmitting)
   //Check for Satellite Availability to trigger sending telemetry
   if (LOW == digitalRead(sat_sa)){   //read sat available pin 
 	  //Is this a transition to LOW from previous HIGH?
 	  if (satSyncFlag) {  //If satSyncFlag is high and the pin is low, we've just transitioned
-	  	//Clear long message from sat modem here
-	  	satClearOutgoingMHA(satLongMsgInOBQMHA);
 	  	satSyncFlag = false);  //set Sync flag to actual state of pin, which is low
 	  } 
 	  return;  //Leave if there's no signal, nothing left to do.
   } else {
   satSyncFlag = true;
   }
-  //Check for being in the delay timer
-  if (satWaitingForUplinkCmdsFlag) return;
  
   //Check to see if the satmodem onboard queue is empty or not
   	// SatQ is EMPTY -------------------
   	if (ATCRptReady) {  //Is a new ATC report Ready to send?
   		//Yes there are ATC reports ready to send
   		//LOAD ATC Report pair
-  		satSendLatestStoredATCPkt();
   		return;
   	} else {
   		//No ATC report ready to send
-  		if(LongMsgReady) {  //Is there a new long Message waiting in the eeprom queue?
+  		if(LongMsgReady) {  //Is there a new long Message waiting?
   			//YES there is a new long message waiting in the eeprom queue
   			//LOAD next Long message
-  			satSendNextQueuedLongMSG(packetBufferS);
   		} else { 
   			//NO there is no long message waiting in the eeprom queue
   			return;
@@ -75,12 +68,10 @@ void satOutgoingMsgOperations(){
   } else {  //SatQ NOT EMPTY -------------------
   	// There are message(s) in the outbound queue
   	if (ATCRptReady) {  //Is a new ATC report Ready to send?
-  		satSendLatestStoredATCPkt();
   		return;
   	} else { 
   		//NO there are no ATC reports ready to send
   		//Is existing ATC pair sent from SatQ?
-  		satHasATCPairBeenTXed()  // <---  THIS FUNC NOT DONE
   		
   }
   
