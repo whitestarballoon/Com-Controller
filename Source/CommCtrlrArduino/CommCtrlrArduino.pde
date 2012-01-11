@@ -11,16 +11,10 @@
  Communications Controller - Program for communicating with the World from the Balloon
  Created by White Star Balloon, December 8, 2010.
  Log:
- -Added Auto Orbcomm Position Report Transmission
  -added cutdown timer change response packet
- -Added uplink and I2C change gateway
  -Changed rejection of long messages to truncation of long messages based on maxTelemLenConst
  -added ATCReport only latest
- -added clearinmg of the SC-Terminated msg queue after a period of 240s without hearing any sats
- -changed inbound queue clearing to only happen once per LOS
- -added packetseqnum++ when inbound queue clearing
  -added i2C command unknown lprintf actual command value in lprintf
- -Added circular buffer for long message queueing
  -Added main loop logic to trigger long message transmission
  */
 
@@ -28,10 +22,9 @@
 /***********
  * Satellite To-Do list
  * Implement 
- 	-Check status of previous message before trying to delete it
  * Solve
  * To Test
- * - Dupe Commands
+ * - Dupplicate uplink Commands - should be ignored
  ************/
 
 /*************
