@@ -9,10 +9,6 @@
  *******************************
  i2cCmdSATTXATCRpt
  i2cCmdSATTxFrmEEPROM 
- i2cCmdHFUpdtTelem 
- i2cCmdHFTxShortRpt 
- i2cCmdHFSetTxRate 
- i2cCmdHFSnooze 
  i2cCmdCDNHeartBeat
  i2cCmdCDNSetTimerAndReset
  i2cCmdCDNCUTDOWNNOW
@@ -54,32 +50,7 @@ void I2CParse(byte command) {
       satQueueI2CEEPROMLongMessage(i2cdata[i2cSel]);
       break;
     }
-  case i2cCmdHFUpdtTelem: //Untested
-    { 
-      packetBufferS[0]=i2cdata[i2cSel][0];
-      packetBufferS[1]=i2cdata[i2cSel][1];
-      packetBufferS[2]=i2cdata[i2cSel][2];
-      hfSendSerialCommand(packetBufferS,3);
-      break;
-    }
-  case i2cCmdHFTxShortRpt: 
-    { 
-      packetBufferS[0]='P';
-      hfSendSerialCommand(packetBufferS,1);
-      break;
-    }
-  case i2cCmdHFSetTxRate: 
-    { 
-      packetBufferS[0]=i2cdata[i2cSel][0];
-      hfSendSerialCommand(packetBufferS,1);
-      break;
-    }
-  case i2cCmdHFSnooze: 
-    { 
-      packetBufferS[0]='X';
-      hfSendSerialCommand(packetBufferS,1);	
-      break;
-    }
+
   case i2cCmdCDNHeartBeat: 
     { 
       cdnCmdResetTimer();
@@ -92,12 +63,7 @@ void I2CParse(byte command) {
       cdnCmdSet(i2cdata[i2cSel][0]);  //Take 1 byte 0-255 for minutes
       lprintf("CC: CDNTimerSet\n");
       break;
-    }
-  case i2cCmdUpdateThreeNinersValue:
-    { 
-      updateThreeNinersTelem();
-      break;
-    }
+     }
   case i2cCmdCDNCUTDOWNNOW: 
     { 
       cdnCmdCUTDOWNNOW();

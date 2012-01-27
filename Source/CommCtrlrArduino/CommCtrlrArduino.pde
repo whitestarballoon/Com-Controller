@@ -88,14 +88,9 @@ const byte i2cRetryLimit = 10;
  *******************************/
 const byte i2cCmdSATTXATCRpt = 0x00;
 const byte i2cCmdSATTxFrmEEPROM = 0x01;
-const byte i2cCmdHFUpdtTelem = 0x02;
-const byte i2cCmdHFTxShortRpt = 0x03;
-const byte i2cCmdHFSetTxRate = 0x04;
-const byte i2cCmdHFSnooze = 0x05;
 const byte i2cCmdCDNHeartBeat = 0x06;
 const byte i2cCmdCDNSetTimerAndReset = 0x07;
 const byte i2cCmdUpdateCurrentEpochTime = 0x08;
-const byte i2cCmdUpdateThreeNinersValue = 0x09;
 const byte i2cCmdCDNCUTDOWNNOW = 0x99;
 const byte i2cCmdSATPowerOn = 0xBB;
 const byte i2cCmdSATPowerOff = 0xAA;
@@ -140,7 +135,6 @@ boolean prevSatSyncStateFlag = false;
  *    Serial declarations      *
  *******************************/
 NewSoftSerial sat(sat_tx,sat_rx);
-NewSoftSerial hf(etx1_tx,etx1_rx);
 NewSoftSerial cdn(etx2_tx,etx2_rx);
 
 //More stuff to allow flash-based debugging serial statements
@@ -189,7 +183,6 @@ void setup() {
 	stdout = &mystdout; //Required for printf init
 	
 
-  hf.begin(4800);                                        // start the HF transmitter Serial Port
   sat.begin(9600);                                        // Start Satellite Serial Port
   cdn.begin(1200);    									//Start cutdown Serial Port 
   Serial.begin(9600);                                     // Start hardware UART Serial Port for debugging
@@ -241,7 +234,7 @@ void loop() {
     //Parse selected command
     I2CParse(i2cRXCommand[i2cSel]);                                      // Parse the command that was received
     i2cCmdsStored--;  // After done processing, decrement the stored tally
-    msgCounterHouseKeeping();  //Checks to see if variable messageRefNum is OK
+   
   }
   
   satAOSLOSAlert();  //alert upon Aquisition of signal and Loss of signal
