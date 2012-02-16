@@ -38,24 +38,24 @@ I2CCommMgr i2cCommMgr;
 void setup()
 {
   
-  
+    // Set all pins as input for bootup
    for(int i=2;i<13;i++){
     pinMode(i, INPUT);
    }
   
-  
+  // Disable all pullup resistors
    for(int i=0;i<13;i++){ 
     digitalWrite(i, LOW);
    } 
 
-
+  //Set up sat modem capacitor voltage measure pin as input
    pinMode(A0, INPUT);
    digitalWrite(A0, LOW);
   
-    
+   //Shut modem off
    pinMode(pinModemPowerSwitch, OUTPUT);
    digitalWrite(pinModemPowerSwitch, LOW);
-
+   //Wait for modem to fully power down - this is important delay!
    delay(2500);
 
    Serial1.begin(19200);
@@ -66,8 +66,7 @@ void setup()
    //Turn modem on
    digitalWrite(pinModemPowerSwitch, HIGH);
    Serial.print("Modem Readiness:\n");
-
-   delay(2000);
+   delay(2000); 
  
   DebugMsg::setDisplay(&myDisplay);
 
