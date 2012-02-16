@@ -89,7 +89,7 @@ Serial.print("w/ Timeout");Serial.println(startMillis);
   boolean bMsgAvailable = false;
   while ( (! bMsgAvailable )  && ( (millis() - startMillis) < timeout)  ) //&& (startMillis < millis() ) )
   {
-Serial.print("*");
+	Serial.println("*");
     while (_HardwareSerial.available())
     {
 
@@ -213,3 +213,4 @@ void Iridium9602::powerOff(void)
 void Iridium9602::powerOn(void)
 {
 }
+
