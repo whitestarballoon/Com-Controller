@@ -20,25 +20,37 @@ void Iridium9602::initModem()
 {
     _rcvIdx = -1;
     //Send out some initialization to the modem
+   //Set Serial Character Echo Off
    _HardwareSerial.print("ATE0\r");
    delay(200);
    checkIncomingMsg();
    Serial.println(_receivedCmd);
    clearIncomingMsg();
-
+   
+   //Set response quiet mode - 0 = responses ARE sent to arduino from modem
    _HardwareSerial.print("ATQ0\r");
    delay(200);
    checkIncomingMsg();
    Serial.println(_receivedCmd);
    clearIncomingMsg();
 
-
-
+	
+   //Ask for manufacturer ID number
+Serial.print("Manufacturer ID: ")
    _HardwareSerial.print("AT+CGMI\r");
    delay(200);
    checkIncomingMsg();
    Serial.println(_receivedCmd);
    clearIncomingMsg();
+   
+   //Ask for modem Serial number
+Serial.print("MODEM Serial#: ")
+   _HardwareSerial.print("AT+CGSN\r");
+   delay(200);
+   checkIncomingMsg();
+   Serial.println(_receivedCmd);
+   clearIncomingMsg();
+
 
 /*
    _HardwareSerial.print("+SBDAREG=1\r");
@@ -89,7 +101,7 @@ Serial.print("w/ Timeout");Serial.println(startMillis);
   boolean bMsgAvailable = false;
   while ( (! bMsgAvailable )  && ( (millis() - startMillis) < timeout)  ) //&& (startMillis < millis() ) )
   {
-	Serial.println("*");
+	//Serial.println("*");
     while (_HardwareSerial.available())
     {
 
