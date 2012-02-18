@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "Iridium9602.h"
+#include "DebugMsg.h"
 
 
 
@@ -20,6 +21,19 @@ void Iridium9602::initModem()
 {
     _rcvIdx = -1;
     //Send out some initialization to the modem
+
+    //Set modem to not use flow control handshaking
+	Serial.print(F("Setting flow control off: "));
+   _HardwareSerial.print("AT&K0\r");
+   delay(200);
+   checkIncomingMsg();
+   Serial.println(_receivedCmd);
+   clearIncomingMsg();  
+    
+
+
+   clearIncomingMsg();
+    
    //Set Serial Character Echo Off
    _HardwareSerial.print("ATE0\r");
    delay(200);
@@ -34,9 +48,18 @@ void Iridium9602::initModem()
    Serial.println(_receivedCmd);
    clearIncomingMsg();
 
+   //Test for modem responding to AT command
+   Serial.print(F("Check for AT command OK response: "));
+   DebugMsg::msg_P("SAT",'D',PSTR("AT Response Check:"));
+   _HardwareSerial.print("AT\r");
+   delay(200);
+   checkIncomingMsg();
+   Serial.println(_receivedCmd);
+   DebugMsg::msg("SAT",'D',_receivedCmd);
+
 	
    //Ask for manufacturer ID number
-Serial.print("Manufacturer ID: ")
+Serial.print("Manufacturer ID: ");
    _HardwareSerial.print("AT+CGMI\r");
    delay(200);
    checkIncomingMsg();
@@ -44,12 +67,13 @@ Serial.print("Manufacturer ID: ")
    clearIncomingMsg();
    
    //Ask for modem Serial number
-Serial.print("MODEM Serial#: ")
+Serial.print("MODEM Serial#: ");
    _HardwareSerial.print("AT+CGSN\r");
    delay(200);
    checkIncomingMsg();
    Serial.println(_receivedCmd);
    clearIncomingMsg();
+
 
 
 /*
@@ -59,13 +83,15 @@ Serial.print("MODEM Serial#: ")
    Serial.println(_receivedCmd);
    clearIncomingMsg();
 
-
-   _HardwareSerial.print("AT+SBDWT=Test Message From Iridium\r");
+*/
+   DebugMsg::msg_P("SAT",'I',PSTR("TxtMessageQOut\n"));
+   _HardwareSerial.print("AT+SBDWT=Test Message From Iridium, Hello World.\r");
    delay(200);
    checkIncomingMsg();
    Serial.println(_receivedCmd);
    clearIncomingMsg();
-*/
+   //DebugMsg::msg_P("SAT",'I',_receivedCmd);
+
 
    _HardwareSerial.flush();	
 }

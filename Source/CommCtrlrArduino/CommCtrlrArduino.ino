@@ -21,6 +21,7 @@
 #define pinBrownout 5
 //define pinVoltageMeasure A0
 
+
 char incomingByte = 0;
 
 // Declare an instance of the class
@@ -65,7 +66,7 @@ void setup()
  
    //Turn modem on
    digitalWrite(pinModemPowerSwitch, HIGH);
-   Serial.print("Modem Readiness:\n");
+   Serial.print("Modem Readiness: \n");
    delay(2000); 
  
   DebugMsg::setDisplay(&myDisplay);
