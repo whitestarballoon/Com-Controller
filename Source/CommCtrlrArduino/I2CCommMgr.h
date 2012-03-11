@@ -11,13 +11,15 @@
 #include "CommCtrlrConfig.h"
 
 #include "I2CMsg.h"
+#include "Iridium9602.h"
+#include "SatCommMgr.h"
 
 
 class I2CCommMgr
 {
 
 public:
-        I2CCommMgr();
+        I2CCommMgr(SatCommMgr& satCommMgr);
         void i2cInit(void);
 
         /*
@@ -29,15 +31,18 @@ public:
         */
         
         int I2CXmit(byte device, byte command, byte* data, int length);
+        int I2CXmitMsg(byte device, byte* data, int length);
         void update();
         void I2CParse(I2CMsg i2cMsg);
         
 private:
         static void i2cReceiveData(int wireDataLen);
+		SatCommMgr& _satCommMgr;
 
 };
 
 #endif
+
 
 
 

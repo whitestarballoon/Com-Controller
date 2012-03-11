@@ -2,7 +2,8 @@
 #define CommCtrlrConfig_h
 
 #define __WHITESTARBALLOON__
-
+#define printExpectings
+#define printVerifiedModemSerialMessages
 
 #if (ARDUINO >= 100)
 #include <Arduino.h>
@@ -20,10 +21,12 @@ Global Configuration Information
 /*******************************
  *    Pin declarations         *
  *******************************/
-const int sat_sa = 3;                              // Satellite Modem Satellite Available
-const int PWR_EN = 6;                              // Satellite Modem Power Enable
-const int sat_cts = 7;                             // Satellite Modem Clear to Send
-const int sat_rts = 9;                             // Satellite Modem Request to Send
+#define pinRI 2
+#define pinNA 3
+#define pinDSR 6
+#define pinModemPowerSwitch 4
+#define pinBrownout 5
+//define pinVoltageMeasure A0
 const int sda = 18;                                // I2C SDA
 const int scl = 19;                                // I2C SCL
 
@@ -45,7 +48,7 @@ const byte i2ceePROMAddr          = 0x50;           // EEPROM I2C Address
 const byte satIncomingPackLenLimit = 70;             //Used to define length of buffer arrays for packet data
 const unsigned int satPowerOffMinimumTime = 2000;    //Probably 2000 millis for iridium
 const unsigned int maxTelemLenConst = 1024;          //Maximum acceptable length of telemetry packet FROM EEPROM
-
+#define satNetworkNotAvailable = 255;
 #define LONG_MSG_QUEUE_LEN 20
 const unsigned int LongMsgQueueLen = LONG_MSG_QUEUE_LEN;             // Number of messages that can be in the queue to send out sat modem
 
@@ -95,4 +98,5 @@ const int EPLOCAtcReportPairArray = 12;
 
 
 #endif
+
 

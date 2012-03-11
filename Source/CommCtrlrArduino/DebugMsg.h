@@ -9,8 +9,9 @@
 
 #include <string.h>
 
+#include "I2CCommMgr.h"
 #include "CommCtrlrConfig.h"
-#include "TextDisplay20x12.h"
+
 
 class DebugMsg
 {
@@ -18,10 +19,11 @@ class DebugMsg
 public:
         static int msg(String sSource, char cLevel, char *str, ...);
         static int msg_P(String sSource, char cLevel, char *str, ...);
-        //static void setDisplay();
-        static void setDisplay(TextDisplay20x12 * t);
+        static void setI2CCommMgr(I2CCommMgr * i2cCommMgr);
+        
 private:
-        static TextDisplay20x12 * tdisp;
+        static I2CCommMgr * _i2cCommMgr;
+        
 };
 
 #endif

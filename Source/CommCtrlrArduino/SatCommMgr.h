@@ -10,9 +10,8 @@
 
 #include <string.h>
 #include "CommCtrlrConfig.h"
-
 #include "LongMsg.h"
-#include "SatQueue.h";
+#include "SatQueue.h"
 
 class SatCommMgr
 {
@@ -21,17 +20,20 @@ public:
         SatCommMgr(Iridium9602& satModem);
         
         void satCommInit();
-
         void update(void);
+        void turnModemOn();
+        void turnModemOff();
         
 private:
         Iridium9602& _satModem;
         void sendShortMsg(ShortMsg sm);
         unsigned long _last_millis;
         //SatQueue& satQueue;
+
 };
 
 #endif
+
 
 
 

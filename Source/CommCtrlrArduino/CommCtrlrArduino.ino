@@ -3,99 +3,107 @@
 
 #include "Iridium9602.h"
 #include <Wire.h>
-#include "RGB_GLCD.h"
+
+
 #include "TimeKeeper.h"
-#include "TextDisplay20x12.h"
+
+
 #include "DebugMsg.h"
 #include "SatQueue.h"
 #include "CutDown.h"
 #include "I2CCommMgr.h"
 #include "SatCommMgr.h"
 
-// Define Pins
 
-#define pinRI 2
-#define pinNA 3
-#define pinDSR 6
-#define pinModemPowerSwitch 4
-#define pinBrownout 5
-//define pinVoltageMeasure A0
+//These things should be later integrated properly VVVVV
+//Why won't these work when accessed from Iridium9602::init function?!?!?!?!  FIX VVV
+//int NetworkAvailableJustChanged;
+//int SatelliteNetworkAvailable;
+
+
 
 
 char incomingByte = 0;
 
+// It turns out the WhiteStar Bus to ArduinoMega board connects I2C to the
+// old arduino pins as well as the new ArduinoMega i2c pins which means you
+// you can not have anything on A4 and A5 or it will conflict. The LCD currently
+// uses those pins as well so the LCD has been disabled. The LCD should be moved to the 
+// ground support board later.
+
 // Declare an instance of the class
-TextDisplay20x12 myDisplay;
-
 Iridium9602 iridium = Iridium9602(IRIDIUM_SERIAL_PORT);
-
 SatCommMgr satCommMgr = SatCommMgr( iridium ); 
 
 TimeKeeper myTimeKeeper = TimeKeeper::getInstance();
 
-I2CCommMgr i2cCommMgr;
+I2CCommMgr i2cCommMgr( satCommMgr );
 
 
 void setup()
 {
   
+   
     // Set all pins as input for bootup
    for(int i=2;i<13;i++){
     pinMode(i, INPUT);
    }
   
   // Disable all pullup resistors
-   for(int i=0;i<13;i++){ 
+   for(int i=2;i<13;i++){ 
     digitalWrite(i, LOW);
    } 
+
+   pinMode(A2,INPUT);
+   pinMode(A3,INPUT);
+   pinMode(A4,INPUT);
+   pinMode(A5,INPUT);
+   digitalWrite(A2,LOW);
+   digitalWrite(A3,LOW);
+   digitalWrite(A4,LOW);
+   digitalWrite(A5,LOW);
+
+
+   //Set I2C White Star Shield alternate pins to inputs, then disable pullup resistor
+   pinMode(A8,INPUT);
+   pinMode(A9,INPUT);
+   pinMode(A10,INPUT);
+   pinMode(A11,INPUT);
+   digitalWrite(A8,LOW);
+   digitalWrite(A9,LOW);
+   digitalWrite(A10,LOW);
+   digitalWrite(A11,LOW);
 
   //Set up sat modem capacitor voltage measure pin as input
    pinMode(A0, INPUT);
    digitalWrite(A0, LOW);
   
-   //Shut modem off
+   //Turn Iridium 9602 modem off
    pinMode(pinModemPowerSwitch, OUTPUT);
    digitalWrite(pinModemPowerSwitch, LOW);
-   //Wait for modem to fully power down - this is important delay!
-   delay(2500);
 
-   Serial1.begin(19200);
-   Serial.begin(115200);
-   Serial.print("Boot\n");
+
+   IRIDIUM_SERIAL_PORT.begin(19200);  //Sat Modem Port
+   Serial.begin(115200);	//Debug-Programming Port
+   //Serial.print("Booting...\n");
  
- 
-   //Turn modem on
-   digitalWrite(pinModemPowerSwitch, HIGH);
-   Serial.print("Modem Readiness: \n");
-   delay(2000); 
- 
-  DebugMsg::setDisplay(&myDisplay);
+
+  DebugMsg::msg_P("CC",'I',PSTR("WSB Comm Controller Reporting for Duty!"));
 
   
-  DebugMsg::msg_P("CC",'I',PSTR("Starting"));
-  
-  myDisplay.setTitle("WhiteStar Balloon");
-  
-  myDisplay.setStatusLeft("CommCtrl");
-  myDisplay.setStatusRight("V0.05");
-  myDisplay.initDisplay();
-  delay(3000);
-  
-  myDisplay.setStatusLeft("Offline");
-  //TextDisplay20x12::setStatusRight("");
-
-  myDisplay.gotoXY(0,0);
-  myDisplay.displayStr(" Waiting for data...");
-  myDisplay.gotoXY(0,0);
-
-
 //  DebugMsg::msg("CC",'I',"MSG %02d %02d %08d",30,40, 50);
 //  DebugMsg::msg("CC",'I',"MSG %02d",10);
 
   CutDown::initCutdown(&CUTDOWN_SERIAL_PORT);
-
+  
   i2cCommMgr.i2cInit();
+  DebugMsg::setI2CCommMgr( &i2cCommMgr );
+  DebugMsg::msg_P("CC",'I',PSTR("Will Send Debug out I2C"));
+  
   satCommMgr.satCommInit();
+
+  DebugMsg::msg_P("CC",'I',PSTR("CommCtrlr Boot Finished."));
+
 }
 
 int i=0;
@@ -105,61 +113,24 @@ void loop()
 {
   //serialIn(Serial);
 
-  myDisplay.gotoXY(19,0); myDisplay.displayChar('|');
   // Update the TimeKeeper Clock
-  if ( myTimeKeeper.update( ) ) 
-  {
-    myDisplay.setStatusRight(myTimeKeeper.getFormattedTime() );
-  }
-
-  myDisplay.gotoXY(19,0); myDisplay.displayChar('/');
+  myTimeKeeper.update( );
   i2cCommMgr.update();
-
-  myDisplay.gotoXY(19,0); myDisplay.displayChar('-');
   satCommMgr.update();
-
-  
-  myDisplay.gotoXY(19,0); myDisplay.displayChar('\\');
-  
-  if (Serial1.available()>0)
-  {
-    incomingByte = Serial1.read();
-    Serial.print(incomingByte);
-  }
-
-/*
-  i++;
-  if (i > 32000) 
-  {
-    i = 0;
-    a++;
-    if ( a >= 10 )
-    {
-      a = 0;
-      if (b == 0)
-      {
-        b=1;
-        Serial1.print("AT+CCLK\r");
-      } else {
-        b=0;
-        Serial1.print("AT+SBDGW\r");
-      }
-    } else {
-      Serial1.print("AT+CSQ\r");
-    }
-    delay(1000);
-  }
-*/
 
 }
 
+
+//Why won't these work when accessed from Iridium9602::init function?!?!?!?!  FIX VVV
 /*
-void serialIn (HardwareSerial s)
+void IridiumUpdateNetworkAvailable()
 {
-  if (s.available() )
-  {
-    myDisplay.displayChar( (char) s.read() );
-  }
+	NetworkAvailableJustChanged = true;
+	SatelliteNetworkAvailable = true;
+}
+void initIridiumNetworkInterrupt()
+{
+	 attachInterrupt(1, IridiumUpdateNetworkAvailable, CHANGE);
 }
 */
 

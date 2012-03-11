@@ -27,7 +27,7 @@ void CutDown::initCutdown(HardwareSerial * sPort)
   cdn = sPort;
   boolean respondFlag = false;	
   char tempin;
-  DebugMsg::msg("CD",'I',"cdnInit. Data RX: ");
+  DebugMsg::msg("CD",'I',"cdnInit.");
   for (byte i = 0; i<10; i++) {  // Look for response
 
     (*cdn).println("!R");  //Reset deadman timer
@@ -42,7 +42,7 @@ void CutDown::initCutdown(HardwareSerial * sPort)
     }
   }
   if (respondFlag == false) {
-    DebugMsg::msg("CD",'E',"CUTDOWN DEAD?");
+    DebugMsg::msg("CD",'E',"CUTDOWN DEAD.");
   }
   delay(500);
   CmdSet(250);  // Immediately set the cutdown to maximum time to give time to work
@@ -73,15 +73,15 @@ void CutDown::ResetTimer() {
     (*cdn).println("!R");
     delay(100);
   }
-  Serial.println("cdn!R");
-  DebugMsg::msg("CD",'I',"Reset Timer");
+  //Serial.println("cdn!R");
+  DebugMsg::msg_P("CD",'I',PSTR("Deadman Timer Reset! Die another day."));
 }
 
 // Set deadman timer time in minutes, which also resets the timer
 void CutDown::CmdSet(unsigned char deadManTime) {
-  DebugMsg::msg("CD",'I',"TmrChg %d", deadManTime);
-  Serial.println(deadManTime,DEC);
-  // DO NOT TRY TO PRINT TO I2C IN THIS FUNCTION!  IT WILL FREEZE 
+  DebugMsg::msg("CD",'I',"Timer Set to %d Minutes.", deadManTime);
+  
+  // DO NOT TRY TO PRINT TO I2C IN THIS FUNCTION IF I2C HAS NOT YET INITIALIZED!  IT WILL FREEZE 
   //COMMCONTROLLER DURING BOOT SEQUENCE WHEN IT INITIALIZES CUTDOWN MODULE!
   for (byte i = 0; i<10; i++) {
     (*cdn).print("!T");
@@ -102,12 +102,13 @@ void CutDown::CmdSet(unsigned char deadManTime) {
 
     if((*cdn).available()) {   // NewSoftSerial read will return -1 when nothing is received
       //A char has been returned
-      DebugMsg::msg("CD",'I',"%02x",(*cdn).read());
+      DebugMsg::msg("CD",'I',"Set confirmation: %02x",(*cdn).read());
     }
 
   }
 
 }
+
 
 
 

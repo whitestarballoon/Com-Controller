@@ -11,6 +11,9 @@
 
 #define MAX_RECV_BUFFER 100
 
+
+
+
 class Iridium9602
 {
 
@@ -21,24 +24,42 @@ public:
         boolean checkIncomingMsg();
         boolean checkIncomingMsg(int);
         boolean checkFixedLenIncomingMsg(int iLen);
+
+        boolean expectPrefix(char *, int, int);
         
         void clearIncomingMsg();
+        void flushIncomingMsg();
+        void parseMessage(char *);
 
         char checkSignal();
 
+		boolean isMessageWaiting();
+		
+		void enableIncommingMsgAlert(boolean);
+		
+        boolean sendMsgText( char * msg );
 	boolean sendMsg( unsigned char * msg, int length);
 	int getMsgWaitingCount();
 	int retrieveMsg( unsigned char * msg);
 	boolean isSatAvailable(void);
 	void powerOff(void);
 	void powerOn(void);	
-        char _receivedCmd[MAX_RECV_BUFFER];
+	boolean isModemOn(void);
+	boolean testForSatSimulatorPresence(void);
 
+	char _receivedCmd[MAX_RECV_BUFFER];
+ 
 private:
 	HardwareSerial& _HardwareSerial;
         int _rcvIdx;
-	
-	
+        char signal;
+		boolean _bRing;
+		int _iMessagesWaiting;
+		
+		
+		
+
 };
 
 #endif
+

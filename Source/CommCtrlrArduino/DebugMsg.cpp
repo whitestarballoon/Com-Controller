@@ -9,50 +9,61 @@
 #include <string.h>
 
 #include "TimeKeeper.h"
-#include "TextDisplay20x12.h"
 #include "DebugMsg.h"
+#include "CommCtrlrConfig.h"
 
-TextDisplay20x12 * DebugMsg::tdisp;
 
-void DebugMsg::setDisplay(TextDisplay20x12 * t)
-//void DebugMsg::setDisplay()
-{
-  tdisp = t;
-}
+ I2CCommMgr * DebugMsg::_i2cCommMgr;
+
+
+ void DebugMsg::setI2CCommMgr(I2CCommMgr * i2cCommMgr)
+ {
+   _i2cCommMgr = i2cCommMgr;
+ }
 
  int DebugMsg::msg(String sSource, char cLevel, char *str, ...)
  {
    char lstr[100];
+   char lstr2[100];
    int chars;
-   Serial.print(sSource); Serial.print("-"); Serial.print(cLevel); Serial.print(" "); Serial.println( TimeKeeper::getInstance().getFormattedTime() );
+   Serial.print(sSource); Serial.print("-"); Serial.print(cLevel); Serial.print(" "); Serial.print( TimeKeeper::getInstance().getFormattedTime() ); Serial.print("  ");
    va_list args;
    va_start(args, str);
    chars = vsnprintf(lstr, 100, str, args);
    if ( chars >= 100 ) lstr[100]=0; 
    Serial.println(lstr);
    
-   if (tdisp) {
-     (*tdisp).displayStr((String)lstr);
-     (*tdisp).newLine();
-   }
+   if (_i2cCommMgr) //Function has be set
+   {
+     chars = snprintf(lstr2, 100,  "C%s", lstr);
+     //chars = snprintf(lstr2, 100,  "C:%s->%s", TimeKeeper::getInstance().getFormattedTime(),lstr);
+     (*_i2cCommMgr).I2CXmitMsg(i2cGroundSupportAddr, (byte*)lstr2, chars);
+   } 
+   
    return 0;
  }
 
  int DebugMsg::msg_P(String sSource, char cLevel, char *str, ...)
  {
    char lstr[100];
+   char lstr2[100];
    int chars;
-   Serial.print(sSource); Serial.print("-"); Serial.print(cLevel); Serial.print(" "); Serial.println( TimeKeeper::getInstance().getFormattedTime() );
+   Serial.print(sSource); Serial.print("-"); Serial.print(cLevel); Serial.print(" "); Serial.print( TimeKeeper::getInstance().getFormattedTime() ); Serial.print("  ");
    va_list args;
    va_start(args, str);
    chars = vsnprintf_P(lstr, 100, str, args);
    if ( chars >= 100 ) lstr[100]=0; 
    Serial.println(lstr);
+
+   if (_i2cCommMgr) //Function has be set
+   {
+     //chars = snprintf(lstr2, 100,  "C:%s->%s", TimeKeeper::getInstance().getFormattedTime(),lstr);
+     chars = snprintf(lstr2, 100,  "C%s", lstr);
+     (*_i2cCommMgr).I2CXmitMsg(i2cGroundSupportAddr, (byte*)lstr2, chars);
+   } 
    
-   if (tdisp) {
-     (*tdisp).displayStr((String)lstr);
-     (*tdisp).newLine();
-   }
    return 0;
  }
+
+
 
