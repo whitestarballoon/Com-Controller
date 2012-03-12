@@ -18,40 +18,68 @@ I2CCommMgr::I2CCommMgr(SatCommMgr& satCommMgr):_satCommMgr(satCommMgr)
 {
 }
 
+//I2CMaxRetries should probably be no more than 10 as each retry delay will increase exponentially.
 int I2CCommMgr::I2CXmit(byte device, byte command, byte* data, int length)
 {
-  // Transmit over I2C
-  Wire.beginTransmission(device);                      // Begin Transmission to (address)
-#if (ARDUINO >= 100)
-  Wire.write(command);                                   // Put (command) on queue
-#else
-  Wire.send(command);                                   // Put (command) on queue
-#endif
-  for (int i = 0;i < length; i++)                       // Loop to put all (data) on queue
-  {
-#if (ARDUINO >= 100)
-    Wire.write(data[i]);                                   // Put (command) on queue
-#else
-    Wire.send(data[i]);                                   // Put (command) on queue
-#endif
-  }
-  int sentStatus = Wire.endTransmission();              // Send queue, will return status
-  return sentStatus;                                   // Return Status of Transmission
+
+	int sentStatus;
+	  // Transmit over I2C
+	for (unsigned int i = 1; i < i2cRetryLimit; i++) 
+	{
+		  Wire.beginTransmission(device);                      // Begin Transmission to (address)
+		#if (ARDUINO >= 100)
+		  Wire.write(command);                                   // Put (command) on queue
+		#else
+		  Wire.send(command);                                   // Put (command) on queue
+		#endif
+		  for (int i = 0;i < length; i++)                       // Loop to put all (data) on queue
+		  {
+		#if (ARDUINO >= 100)
+			Wire.write(data[i]);                                   // Put (command) on queue
+		#else
+			Wire.send(data[i]);                                   // Put (command) on queue
+		#endif
+		  }
+		  sentStatus = Wire.endTransmission();              // Send queue, will return status
+		  if (sentStatus == 0) 
+		  {
+		  break;
+		  }
+		  Serial.println(F("I2CTXERR"));
+		  Serial.flush();
+		  //If it didn't' suceed for  any reason, try again
+		  delay(random(((i-1)*(i-1)*100),(i*i*100)));  //Delay for a random time between (i-1)^2*100 millis i^2*100 millis
+	}
+    return sentStatus;                                   // Return Status of Transmission	
 }
 
 int I2CCommMgr::I2CXmitMsg(byte device, byte* data, int length)
 {
-  // Transmit over I2C
-  Wire.beginTransmission(device);                      // Begin Transmission to (address)
-  for (int i = 0;i < length; i++)                       // Loop to put all (data) on queue
-  {
-#if (ARDUINO >= 100)
-    Wire.write(data[i]);                                   // Put (command) on queue
-#else
-    Wire.send(data[i]);                                   // Put (command) on queue
-#endif
-  }
-  int sentStatus = Wire.endTransmission();              // Send queue, will return status
+
+	int sentStatus;
+	  // Transmit over I2C
+	for (unsigned int i = 1; i < i2cRetryLimit; i++) 
+	{
+	  // Transmit over I2C
+	  Wire.beginTransmission(device);                      // Begin Transmission to (address)
+	  for (int i = 0;i < length; i++)                       // Loop to put all (data) on queue
+	  {
+	#if (ARDUINO >= 100)
+		Wire.write(data[i]);                                   // Put (command) on queue
+	#else
+		Wire.send(data[i]);                                   // Put (command) on queue
+	#endif
+	  }
+	  sentStatus = Wire.endTransmission();              // Send queue, will return status
+	  if (sentStatus == 0) 
+		  {
+		  break;
+		  }
+		  Serial.println(F("I2CTXERR"));
+		  Serial.flush();
+		  //If it didn't' suceed for  any reason, try again
+		  delay(random(((i-1)*(i-1)*100),(i*i*100)));  //Delay for a random time between (i-1)^2*100 millis i^2*100 millis
+	}
   return sentStatus;                                   // Return Status of Transmission
 }
 
@@ -119,11 +147,13 @@ void I2CCommMgr::i2cReceiveData(int wireDataLen)
 //  Serial.print("Cmd:");Serial.print(i2cMsg.i2cRxCommand);
 #ifdef i2cDebug_DONT_ENABLE  // This makes the serial out too long and causes lockup
   // Printing code for debug usage                                                 
-  DebugMsg::msg_P("I2C",'I',PSTR("i2c Packet Rx'd. Cmd: %x Data: "),i2cMsg.i2cRxCommand);
-  for (int i = 0;i < i2cMsg.i2cDataLen; i++)
+  DebugMsg::msg("I2C",'I',"i2c Packet Rx'd. Cmd: %x Data: ",i2cMsg.i2cRxCommand);
+  for (int i = 0;i < i2cMsg.i2cDataLen-1; i++)
   {
-    DebugMsg::msg_P("I2C",'I'," %0x",i2cMsg.i2cData[i]);
+    Serial.print(i2cMsg.i2cData[i],HEX); Serial.print(" ")
+    //DebugMsg::msg("I2C",'I'," %0x",i2cMsg.i2cData[i]);
   }
+  Serial.println();
 #endif
   // Store the Command
   I2CQueue::getInstance().write(i2cMsg);
@@ -148,14 +178,21 @@ void I2CCommMgr::update()
 void I2CCommMgr::I2CParse(I2CMsg i2cMsg)
 {
 
-  DebugMsg::msg_P("I2C",'I',PSTR("I2C Parse"));
-  
+  //DebugMsg::msg_P("I2C",'I',PSTR("I2C Parse"));
+  DebugMsg::msg("I2C",'I',("i2c Packet Rx'd. Cmd: %0x Data V "),i2cMsg.i2cRxCommand);
+  Serial.flush();
+  for (int i = 0;i < i2cMsg.i2cDataLen; i++)
+  {
+    Serial.print(i2cMsg.i2cData[i],HEX); Serial.print(" ");
+  }
+  Serial.flush();
   switch(i2cMsg.i2cRxCommand){
 
     case i2cCmdSATTXATCRpt: 
     { 
       DebugMsg::msg_P("I2C",'I',PSTR("Store ATC Rpt"));
 /*
+#if 0
       //Store Latest position and Epoch Time for later use
       latestPosition[0]=i2cdata[i2cSel][6];  //lat0
       latestPosition[1]=i2cdata[i2cSel][7];  //lat1
@@ -163,28 +200,23 @@ void I2CCommMgr::I2CParse(I2CMsg i2cMsg)
       latestPosition[3]=i2cdata[i2cSel][0];  //lon0
       latestPosition[4]=i2cdata[i2cSel][1];  //lon1
       latestPosition[5]=i2cdata[i2cSel][2];  //lon2
-      epochMinutes = word((i2cdata[i2cSel][4] & B00001111),i2cdata[i2cSel][5]);  //Copy epochMinute value into ram
       satSaveATCPkt(); //save the ATC packet to be ready to send when sat is ready to accept.
+      unsigned int epochMinutes = word((i2cMsg.i2cData[4] & B00001111),i2cMsg.i2cData[5]);  //Copy epochMinute value into ram
+      //           Lat0               Lat1               Lat2               Lon0               Lon1               Lon2               Alt
+      ShortMsg msg(i2cMsg.i2cData[6], i2cMsg.i2cData[7], i2cMsg.i2cData[8], i2cMsg.i2cData[0], i2cMsg.i2cData[1], i2cMsg.i2cData[2], 0 , epochMinutes);
+	  SatQueue::getInstance().write(&msg);
+#endif
 */
       break;
     } 
     
     case i2cCmdSATTxFrmEEPROM: 
     { 
-      DebugMsg::msg_P("I2C",'I',PSTR("Store Long Rpt:"));
-/*      
-      //If Flight computer sends a pair of I2C EEPROM addresses that are the same, that's an error in the FC
-      if((i2cdata[i2cSel][0] == i2cdata[i2cSel][2]) && (i2cdata[i2cSel][1] == i2cdata[i2cSel][3])){
-        lprintf("CC:i2cEEPMsgAddrs same");
-        printf_P(PSTR("i2cEEPMsgAddrs same\n"));
-        break; // Do not continue, do not store requested pair.
-      }
-      satQueueI2CEEPROMLongMessage(i2cdata[i2cSel]);
-      DebugMsg::msg_P("I2C",'I',PSTR("Store Long Rpt"));
-*/
-	  // how do you use this VVV	
-	  //if (SatQueue::write()) 
-	  if (0 == 1)
+      LongMsg msg(i2cMsg.i2cData[0],i2cMsg.i2cData[1],i2cMsg.i2cData[2],i2cMsg.i2cData[3]);
+
+      //DebugMsg::msg_P("I2C",'I',PSTR("Store Long Message"));
+
+	  if (SatQueue::getInstance().write(msg))
 	  {
 	  	DebugMsg::msg_P("I2C",'I',PSTR("Report Stored OK."));
 	  } else {
@@ -224,7 +256,7 @@ void I2CCommMgr::I2CParse(I2CMsg i2cMsg)
     }
     
     case i2cCmdSATPowerOff: 
-    { 
+    {
       DebugMsg::msg_P("I2C",'I',PSTR("SatModem OFF"));
       _satCommMgr.turnModemOff();
       break;
@@ -232,7 +264,7 @@ void I2CCommMgr::I2CParse(I2CMsg i2cMsg)
 
   default:                                               // Ignore any command that is not in the list
     {
-      DebugMsg::msg_P("I2C",'E',PSTR("Unknown Command"), i2cMsg.i2cRxCommand);
+      DebugMsg::msg("I2C",'E',"Unknown Command: %0x"), i2cMsg.i2cRxCommand;
     }
   }
 }

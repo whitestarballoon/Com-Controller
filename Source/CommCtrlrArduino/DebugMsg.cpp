@@ -54,11 +54,12 @@
    chars = vsnprintf_P(lstr, 100, str, args);
    if ( chars >= 100 ) lstr[100]=0; 
    Serial.println(lstr);
-
+   
+   //I2C has 32 byte limit on output!
    if (_i2cCommMgr) //Function has be set
    {
      //chars = snprintf(lstr2, 100,  "C:%s->%s", TimeKeeper::getInstance().getFormattedTime(),lstr);
-     chars = snprintf(lstr2, 100,  "C%s", lstr);
+     chars = snprintf(lstr2, 32,  "C%s", lstr);
      (*_i2cCommMgr).I2CXmitMsg(i2cGroundSupportAddr, (byte*)lstr2, chars);
    } 
    

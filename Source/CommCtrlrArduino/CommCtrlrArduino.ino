@@ -8,6 +8,7 @@
 #include "TimeKeeper.h"
 
 
+#include "BaseMsg.h"
 #include "DebugMsg.h"
 #include "SatQueue.h"
 #include "CutDown.h"
@@ -17,11 +18,8 @@
 
 //These things should be later integrated properly VVVVV
 //Why won't these work when accessed from Iridium9602::init function?!?!?!?!  FIX VVV
-//int NetworkAvailableJustChanged;
-//int SatelliteNetworkAvailable;
-
-
-
+volatile int NetworkAvailableJustChanged = 0;
+volatile int SatelliteNetworkAvailable = 0;
 
 char incomingByte = 0;
 
@@ -96,11 +94,11 @@ void setup()
 
   CutDown::initCutdown(&CUTDOWN_SERIAL_PORT);
   
-  i2cCommMgr.i2cInit();
+  //i2cCommMgr.i2cInit();
   DebugMsg::setI2CCommMgr( &i2cCommMgr );
   DebugMsg::msg_P("CC",'I',PSTR("Will Send Debug out I2C"));
   
-  satCommMgr.satCommInit();
+  //satCommMgr.satCommInit(  &i2cCommMgr );
 
   DebugMsg::msg_P("CC",'I',PSTR("CommCtrlr Boot Finished."));
 
@@ -122,17 +120,20 @@ void loop()
 
 
 //Why won't these work when accessed from Iridium9602::init function?!?!?!?!  FIX VVV
-/*
 void IridiumUpdateNetworkAvailable()
 {
 	NetworkAvailableJustChanged = true;
 	SatelliteNetworkAvailable = true;
 }
+
 void initIridiumNetworkInterrupt()
 {
 	 attachInterrupt(1, IridiumUpdateNetworkAvailable, CHANGE);
 }
-*/
 
-
-
+extern "C" {
+int atexit(void (*func)(void))
+{
+        return 0;
+}
+};

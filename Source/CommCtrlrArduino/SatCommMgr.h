@@ -13,23 +13,32 @@
 #include "LongMsg.h"
 #include "SatQueue.h"
 
+class I2CCommMgr;
+
 class SatCommMgr
 {
 
 public:
         SatCommMgr(Iridium9602& satModem);
         
-        void satCommInit();
+        void satCommInit(I2CCommMgr * i2cCommMgr);
         void update(void);
         void turnModemOn();
         void turnModemOff();
+      
         
+		
 private:
         Iridium9602& _satModem;
         void sendShortMsg(ShortMsg sm);
         unsigned long _last_millis;
         //SatQueue& satQueue;
+        I2CCommMgr * _i2cCommMgr;
 
+		void parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int packLen);
+		void satCommCommandProc(unsigned char * packetBufferLocal);
+		void satConfirmTimerCHG(byte timerValue);
+		
 };
 
 #endif
