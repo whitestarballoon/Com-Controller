@@ -51,10 +51,11 @@ boolean SatQueue::write(LongMsg & msg)
 {
   byte localBuffer[10];
   
-        Serial.println(F("write() called?"));
+  memset(localBuffer, 0, sizeof(localBuffer));
+  Serial.println(F("write() called?"));
   Serial.print(F("SQ-I: Write Data V"));
-  Serial.flush();
-  msg.getFormattedMsg(localBuffer,4);
+  //msg.getFormattedMsg(localBuffer,4);
+  Serial.print(F("SQ-I: Write Data VI"));
   for (int i = 0;i < 4; i++)
   {
     Serial.print(localBuffer[i],HEX); Serial.print(" ");

@@ -94,11 +94,11 @@ void setup()
 
   CutDown::initCutdown(&CUTDOWN_SERIAL_PORT);
   
-  //i2cCommMgr.i2cInit();
+  i2cCommMgr.i2cInit();
   DebugMsg::setI2CCommMgr( &i2cCommMgr );
   DebugMsg::msg_P("CC",'I',PSTR("Will Send Debug out I2C"));
   
-  //satCommMgr.satCommInit(  &i2cCommMgr );
+  satCommMgr.satCommInit(  &i2cCommMgr );
 
   DebugMsg::msg_P("CC",'I',PSTR("CommCtrlr Boot Finished."));
 

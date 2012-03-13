@@ -65,13 +65,14 @@ void SatCommMgr::update(void)
         {
                 SatQueue & q = SatQueue::getInstance();
                 int i;
-     //           char buf[20];
+                char buf[20];
                 memset(lstr, 0, sizeof(lstr));
                 LongMsg msg;
                 q.read(msg);
 
+                //DebugMsg::msg("SC",'I'," sizeof(%d)", sizeof(lstr));
                 msg.getFormattedMsg((unsigned char *)lstr, sizeof(lstr));
-#if 0
+#if 1
                 Serial.print(F("==========--> "));
                 for(i = 0; i < msg.getFormattedLength(); i++) {
                         sprintf(buf, "%x ", lstr[i]);

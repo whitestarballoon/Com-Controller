@@ -27,18 +27,20 @@ int LongMsg::getFormattedMsg(unsigned char * data, int data_sz)
 {
         byte gottenLength = getFormattedLength();
         int i = 0;
+
+        DebugMsg::msg("LM", 'I', " s: %x e: %x gottenLength: %d data_sz: %d", _StartAddr, _EndAddr, gottenLength, data_sz);
         if ( gottenLength <= 0) {
                 return -1;
         }
 
-        if (data_sz > gottenLength) {
+        if (gottenLength > data_sz) {
         
                 DebugMsg::msg("LM",'E'," buf not big enough for FormattedMsg(%d) need %d"),
                                             data_sz, gottenLength;
                 return -1;
         }
 
-        for (unsigned int iAddr = _StartAddr ; i <= _EndAddr ; i++)
+        for (unsigned int iAddr = _StartAddr ; iAddr <= _EndAddr ; iAddr++, i++)
         {
                 data[i] = I2CeePROMRead( i2ceePROMAddr, iAddr);
         }
