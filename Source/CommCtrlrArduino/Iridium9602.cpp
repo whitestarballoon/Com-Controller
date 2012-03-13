@@ -101,7 +101,7 @@ void Iridium9602::initModem()
         flushIncomingMsg();
 
 
-        enableIncommingMsgAlert(true);
+        enableIncommingMsgAlert(false);
 
 
         // Write the defaults to the modem and use default and flush to eeprom √
@@ -113,21 +113,7 @@ void Iridium9602::initModem()
         _HardwareSerial.println("AT&Y0");
         expectPrefix("OK",2,4);
         flushIncomingMsg();
-        /*	   
-                   _HardwareSerial.println("AT*F");
-                   expectPrefix("OK",2,2);
-                   flushIncomingMsg();
-                   */
-
-        /*
-        // Register for ring notifications
-        _HardwareSerial.print("AT+SBDREG\r");
-        delay(200);
-        _HardwareSerial.print("AT+SBDMTA=1");
-        delay(200);
-        flushIncomingMsg();
-        */
-
+       
 }
 
 /*
@@ -322,7 +308,7 @@ boolean Iridium9602::sendMsgText( char * msg )
         char cResult = checkSignal();
         if (cResult != '\0' && cResult != '0') // Then we must have a signal
         {
-                enableIncommingMsgAlert(false); // turn off alerts
+                //enableIncommingMsgAlert(false); // turn off alerts
                 flushIncomingMsg();
                 _HardwareSerial.print("AT+SBDWT="); _HardwareSerial.println(msg);
                 delay(1000);
@@ -335,7 +321,7 @@ boolean Iridium9602::sendMsgText( char * msg )
                         {
                                 // Clear the outgoing message buffer in the modem
                                 _HardwareSerial.println("AT+SBDD0");
-                                enableIncommingMsgAlert(true); // turn on alerts
+                                //enableIncommingMsgAlert(true); // turn on alerts
 
                                 flushIncomingMsg();
                                 return true;
@@ -343,7 +329,7 @@ boolean Iridium9602::sendMsgText( char * msg )
                 }
                 flushIncomingMsg();
         } 
-        enableIncommingMsgAlert(true); // turn on alerts
+        //enableIncommingMsgAlert(true); // turn on alerts
         return false;
 }
 
@@ -355,7 +341,7 @@ boolean Iridium9602::sendMsg( unsigned char * msg, int length)
         if (cResult != '\0' && cResult != '0') // Then we must have a signal
         {
                 flushIncomingMsg();
-                enableIncommingMsgAlert(false); // turn off alerts
+                //enableIncommingMsgAlert(false); // turn off alerts
                 _HardwareSerial.print("AT+SBDWB="); _HardwareSerial.println(length);
                 delay(1000);
                 if (expectPrefix("READY",5, 5) ) // Got a ready so send the data
@@ -375,7 +361,7 @@ boolean Iridium9602::sendMsg( unsigned char * msg, int length)
                                         // Clear the outgoing message buffer in the modem
                                         _HardwareSerial.println("AT+SBDD0");
 
-                                        enableIncommingMsgAlert(true); // turn on alerts
+                                        //enableIncommingMsgAlert(true); // turn on alerts
 
                                         flushIncomingMsg();
                                         return true;
@@ -387,7 +373,7 @@ boolean Iridium9602::sendMsg( unsigned char * msg, int length)
                 }
                 flushIncomingMsg();
         } 
-        enableIncommingMsgAlert(true); // turn on alerts
+        //enableIncommingMsgAlert(true); // turn on alerts
         return false;
 }
 
@@ -407,7 +393,7 @@ void Iridium9602::enableIncommingMsgAlert(boolean bEnable)
         } else {
                 _HardwareSerial.println("AT+CIER=0,0,0,0");
                 expectPrefix("OK",2,4);
-                _HardwareSerial.println("AT+SBDMTA=1");
+                _HardwareSerial.println("AT+SBDMTA=0");
                 expectPrefix("OK",2,4);
         }
         flushIncomingMsg();
