@@ -86,6 +86,7 @@ void SatCommMgr::update(void)
 								
 				#endif
 						}
+						_last_millis = millis();
 				}
     }
         
