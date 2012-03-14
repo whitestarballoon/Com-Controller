@@ -31,12 +31,10 @@ void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
 
 void SatCommMgr::update(void)
 {
-        char lstr[100];
-        //FIX vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv  - use some sort of global variable for satSimulatorConnected
-        //if(_satModem.isSatAvailable() == true )
+        unsigned char lstr[100];
         if(_satModem.isSatAvailable())
         { 
-                if ( millis() - _last_millis > 1000)
+                if ( (millis() - _last_millis) > 1000)
                 {  
                         //Serial.println(F("SCM:update:Check Signal"));
                         Serial.print("!");
@@ -54,48 +52,43 @@ void SatCommMgr::update(void)
                         */
                         DebugMsg::msg("CC",'I',"SIG-OK");
 
-                        _last_millis = millis();
-                }
-        }
+							  /*          
+						// Check if anything is available from the sat modem
+						if ( _satModem.checkIncomingMsg() )  // Update will return true if there is a message to be processed (\r\n)
+						{
+						Serial.println(_satModem._receivedCmd);
+						}
+						*/          
+       
 
-        /*          
-        // Check if anything is available from the sat modem
-        if ( _satModem.checkIncomingMsg() )  // Update will return true if there is a message to be processed (\r\n)
-        {
-        Serial.println(_satModem._receivedCmd);
-        }
-        */
-        if ( SatQueue::getInstance().isMsgAvail() ) // Got a  message that needs to be sent
-        {
-                SatQueue & q = SatQueue::getInstance();
-                int i;
-                char buf[20];
-                memset(lstr, 0, sizeof(lstr));
-                LongMsg msg;
-                q.read(msg);
-
-                //DebugMsg::msg("SC",'I'," sizeof(%d)", sizeof(lstr));
-                int msgLen = msg.getFormattedMsg((unsigned char *)lstr, sizeof(lstr));
-#if 1
-                Serial.print(F("==========--> "));
-                for(i = 0; i < msg.getFormattedLength(); i++) {
-                        sprintf(buf, "%x ", lstr[i]);
-                        Serial.print(buf);
-                }
-                Serial.print(msg.getFormattedLength());
-                Serial.print("<--==========");
+        
+						if ( SatQueue::getInstance().isMsgAvail() ) // Got a  message that needs to be sent
+						{
+								SatQueue & q = SatQueue::getInstance();
+								int i;
+								char buf[20];
+								memset(lstr, 0, sizeof(lstr));
+								LongMsg msg;
+								q.read(msg);
 				
-                //q.getFormattedMsg();
-#endif
-                //Serial.println(F("ATCReport Would send to sat here"));
-                
-
-        }
-
-        if (  SatQueue::getInstance().count() > 0)  // Got a long message that needs to be sent
-        {
-                Serial.println(F("LongMessage Would send to sat here"));
-        }
+								//DebugMsg::msg("SC",'I'," sizeof(%d)", sizeof(lstr));
+								int msgLen = msg.getFormattedMsg((unsigned char *)lstr, sizeof(lstr));
+				#if 1
+								Serial.print(F("==========--> "));
+								for(i = 0; i < msgLen; i++) {
+										sprintf(buf, "%x ", lstr[i]);
+										Serial.print(buf);
+								}
+								Serial.print(msgLen);
+								Serial.println("<--==========");
+								_satModem.loadMOMessage((unsigned char *)lstr,(int)msgLen);
+								_satModem.initiateSBDSessionHACK();
+								
+				#endif
+						}
+				}
+    }
+        
 
 }
 
@@ -106,7 +99,7 @@ void SatCommMgr::sendShortMsg(ShortMsg sm)
 
 void SatCommMgr::sendLongMsg(unsigned char * mstr, int len)
 {
-        _satModem.loadMOMessage(unsigned char * mstr,len);
+        
         
 }
 

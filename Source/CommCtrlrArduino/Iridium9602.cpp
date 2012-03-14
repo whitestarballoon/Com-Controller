@@ -338,7 +338,7 @@ boolean Iridium9602::sendMsg( unsigned char * msg, int length)
 {
         // Check that we have a signal. If not don't send the message
         char cResult = checkSignal();
-        if (cResult != '\0' && cResult != '0') // Then we must have a signal
+        //if (cResult != '\0' && cResult != '0') // Then we must have a signal
         {
                 flushIncomingMsg();
                 //enableIncommingMsgAlert(false); // turn off alerts
@@ -460,35 +460,42 @@ boolean Iridium9602::testForSatSimulatorPresence(void)
    void Iridium9602::loadMOMessage(unsigned char* messageArray, int messageLength) 
 {
    
-/*
+
   //Compute Checksum
     unsigned int checksum;
     byte checksumHighByte;
-    byte checksumLowBye;
+    byte checksumLowByte;
     String localstring;
 	//Checksum is 2-byte summation of entire SBD message, high order byte first.  
 	for (int i = 0; i < messageLength; i++){
-		checksum += message[i]; 
+		checksum += messageArray[i]; 
 	}
 	checksumHighByte = highByte(checksum);
 	checksumLowByte = lowByte(checksum);
-	localstring = "+SBDWB=" + String(messageLength)+"\r\n";
-	Serial.println(localstring);
-	//Send command to modem, handle error
-	if(0 == (modem.print(localstring,"READY",2,3))) 
-	{
-		localstring = message + String(highbyte + lowbyte);
-		
-		//Send binary message here, + 2 bytes of checksum
-		(modem.print(message,lengthExcludingChecksum,"READY",2,3))
-		
-	} else {  //Modem did not respond as expected within timeout	
+	messageArray[messageLength] = checksumHighByte;
+	messageArray[messageLength + 1] = checksumLowByte;
+	delay(100);
+	_HardwareSerial.print("AT+SBDWB=");
+	_HardwareSerial.print(messageLength);
 	
+	delay(1000);
+	
+	for (int i = 0; i < (messageLength + 2); i++){
+		_HardwareSerial.print(messageArray[i]); 
 	}
-	*/
+	Serial.println(F("Message Loaded in 9602 MOQueue"));
+	
+	
 	
 }
 
+  void Iridium9602::initiateSBDSessionHACK(void)
+  {
+  	 delay(500);
+  	 _HardwareSerial.println("AT+SBDIX");
+  	 delay(2000);
+  	 Serial.println("SBD session initiated");
+  }
 
 
 

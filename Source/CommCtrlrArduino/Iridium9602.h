@@ -47,6 +47,8 @@ class Iridium9602
                 boolean isModemOn(void);
                 boolean testForSatSimulatorPresence(void);
    				void loadMOMessage(unsigned char * , int ); 
+   				void initiateSBDSessionHACK(void);
+   				
                 char _receivedCmd[MAX_RECV_BUFFER];
                 
 
