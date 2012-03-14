@@ -32,8 +32,14 @@ void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
 void SatCommMgr::update(void)
 {
         unsigned char lstr[100];
+          snprintf((char *)lstr, 6, "hello");
+          _satModem.loadMOMessage((unsigned char *)lstr,5);
+          _satModem.initiateSBDSessionHACK();
+          Serial.print(F("Sent!\n"));
+          while(1) ;
         if(_satModem.isSatAvailable())
         { 
+
                 if ( (millis() - _last_millis) > 1000)
                 {  
                         //Serial.println(F("SCM:update:Check Signal"));
@@ -86,6 +92,7 @@ void SatCommMgr::update(void)
 								
 				#endif
 						}
+
 						_last_millis = millis();
 				}
     }

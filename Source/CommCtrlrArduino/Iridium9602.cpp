@@ -275,6 +275,31 @@ boolean Iridium9602::expectPrefix(char * sPrefix, int iPrefixLen, int iTimeoutSe
 }
 
 
+void Iridium9602::checkIncomingCRLF()
+{
+  char inChar;
+  Serial.print(F("Modem response: "));
+  do 
+  {
+    if (_rcvIdx >= MAX_RECV_BUFFER) {
+      Serial.write((uint8_t *)_receivedCmd, sizeof(_receivedCmd));
+      _rcvIdx = 0;
+    }
+    if (_HardwareSerial.available())
+    {
+      inChar = _HardwareSerial.read();
+      _receivedCmd[++_rcvIdx] = (unsigned char )inChar;
+      if (_rcvIdx > 2 && _receivedCmd[_rcvIdx - 1] == '\r' && _receivedCmd[_rcvIdx] == '\n') {
+        Serial.write((uint8_t *)_receivedCmd, _rcvIdx);
+        _rcvIdx = 0;
+        break;
+      }
+    } else {
+      delay(50);
+    }
+  } while(true);
+  Serial.println("");
+}
 
 char Iridium9602::checkSignal()
 {
@@ -462,7 +487,8 @@ boolean Iridium9602::testForSatSimulatorPresence(void)
    
 
   //Compute Checksum
-    unsigned int checksum;
+    unsigned int checksum = 0;
+    char buf[10];
     byte checksumHighByte;
     byte checksumLowByte;
     String localstring;
@@ -472,29 +498,53 @@ boolean Iridium9602::testForSatSimulatorPresence(void)
 	}
 	checksumHighByte = highByte(checksum);
 	checksumLowByte = lowByte(checksum);
+#if 0
 	messageArray[messageLength] = checksumHighByte;
 	messageArray[messageLength + 1] = checksumLowByte;
 	delay(100);
+#endif
 	_HardwareSerial.print("AT+SBDWB=");
 	_HardwareSerial.println(messageLength);
+	checkIncomingCRLF();
+//	delay(1000);
 	
-	delay(1000);
-	
+#if 0
 	for (int i = 0; i < (messageLength + 2); i++){
 		_HardwareSerial.print(messageArray[i]); 
 	}
+#else
+        Serial.print(F("Starting ... ck:"));
+        sprintf(buf, "%x\n", checksum);
+        Serial.print(buf);
+
+	for (int i = 0; i < messageLength; i++){
+          sprintf(buf, "%02x ", messageArray[i]);
+          Serial.print(buf);
+	}
+
+        _HardwareSerial.write(messageArray, messageLength);
+        _HardwareSerial.write(&checksumHighByte, 1);
+        _HardwareSerial.write(&checksumLowByte, 1);
+        //_HardwareSerial.write((uint8_t *)checksum, 2);
+
+        sprintf(buf, "* %02x ", checksumHighByte);
+        Serial.print(buf);
+        sprintf(buf, "%02x\n", checksumLowByte);
+        Serial.print(buf);
+        
+        Serial.println(F("DONE"));
+#endif
 	_HardwareSerial.println();
+	checkIncomingCRLF();
+	checkIncomingCRLF();
 	Serial.println(F("Message Loaded in 9602 MOQueue"));
-	
-	
-	
 }
 
   void Iridium9602::initiateSBDSessionHACK(void)
   {
   	 delay(500);
   	 _HardwareSerial.println("AT+SBDIX");
-  	 delay(2000);
+	checkIncomingCRLF();
   	 Serial.println("SBD session initiated");
   }
 

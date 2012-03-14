@@ -51,6 +51,8 @@ class Iridium9602
    				
                 char _receivedCmd[MAX_RECV_BUFFER];
                 
+        private:
+                void checkIncomingCRLF();
 
         private:
                 HardwareSerial& _HardwareSerial;

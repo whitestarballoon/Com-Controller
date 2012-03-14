@@ -21,7 +21,6 @@
 volatile int NetworkAvailableJustChanged = 0;
 volatile int SatelliteNetworkAvailable = 0;
 
-char incomingByte = 0;
 
 // It turns out the WhiteStar Bus to ArduinoMega board connects I2C to the
 // old arduino pins as well as the new ArduinoMega i2c pins which means you
@@ -104,9 +103,6 @@ void setup()
 
 }
 
-int i=0;
-int a=0;
-int b=0;
 void loop()
 {
   //serialIn(Serial);
