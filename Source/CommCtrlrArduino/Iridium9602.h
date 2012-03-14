@@ -46,7 +46,7 @@ class Iridium9602
                 void powerOn(void);	
                 boolean isModemOn(void);
                 boolean testForSatSimulatorPresence(void);
-				void loadMOMessage(String, unsigned int);
+   				void loadMOMessage(unsigned char * , int ); 
                 char _receivedCmd[MAX_RECV_BUFFER];
                 
 

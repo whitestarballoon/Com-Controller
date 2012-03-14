@@ -31,6 +31,7 @@ public:
 private:
         Iridium9602& _satModem;
         void sendShortMsg(ShortMsg sm);
+        void sendLongMsg(unsigned char * mstr, int len);
         unsigned long _last_millis;
         //SatQueue& satQueue;
         I2CCommMgr * _i2cCommMgr;

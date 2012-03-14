@@ -453,18 +453,11 @@ boolean Iridium9602::testForSatSimulatorPresence(void)
                 }
         }
 }
-/*
-   void Iridium9602::setupInterrupt(void)
-   {
-
-   }
-
-*/
 
 
 
 //FUNCTION: Write binary data to sat modem MO Queue 
-   void Iridium9602::loadMOMessage(String message, unsigned int messageLength) 
+   void Iridium9602::loadMOMessage(unsigned char* messageArray, int messageLength) 
 {
    
 /*
