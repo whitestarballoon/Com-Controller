@@ -74,30 +74,30 @@ void Iridium9602::initModem()
         do {
                 { //Delay without the delay command
                         unsigned long millistart = millis();
-                        while ( millis() < millistart + 2000 ) {
+                        while ( millis() < millistart + 3000 ) {
                         }
                 }
                 _HardwareSerial.println("AT");
-        } while ( ! expectPrefix("OK",2,3) );
+        } while ( ! expectPrefix("OK",2,1) );
 
         //Serial.println("SUCCESS");
         //return;
 
         //Set Serial Character Echo Off √
         _HardwareSerial.println("ATE0");
-        expectPrefix("OK",2,4);
+        expectPrefix("OK",2,1);
         flushIncomingMsg();
 
         //Set modem to not use flow control handshaking during SBD messaging √
         flushIncomingMsg();
         _HardwareSerial.println("AT&K0");
-        expectPrefix("OK",2,4);
+        expectPrefix("OK",2,1);
         flushIncomingMsg(); 	
 
 
         //Set response quiet mode - 0 = responses ARE sent to arduino from modem √
         _HardwareSerial.println("ATQ0");
-        expectPrefix("OK",2,4);
+        expectPrefix("OK",2,1);
         flushIncomingMsg();
 
 
@@ -106,12 +106,12 @@ void Iridium9602::initModem()
 
         // Write the defaults to the modem and use default and flush to eeprom √
         _HardwareSerial.println("AT&W0");
-        expectPrefix("OK",2,4);
+        expectPrefix("OK",2,1);
         flushIncomingMsg();
 
         //Designate Default Reset Profile √
         _HardwareSerial.println("AT&Y0");
-        expectPrefix("OK",2,4);
+        expectPrefix("OK",2,1);
         flushIncomingMsg();
        
 }
@@ -149,7 +149,7 @@ return bMsgAvailable;
 boolean Iridium9602::checkIncomingMsg(int timeout) // timeout in milliseconds
 {
         unsigned long startMillis = millis();
-        Serial.print("CI w/ TO ");Serial.println(startMillis);
+        //Serial.print("CI w/ TO ");Serial.println(startMillis);
         unsigned char inChar;
         boolean bMsgAvailable = false;
         while ( (!bMsgAvailable )  && ( (millis() - startMillis) < timeout)  ) //&& (startMillis < millis() ) )
@@ -476,13 +476,14 @@ boolean Iridium9602::testForSatSimulatorPresence(void)
 	messageArray[messageLength + 1] = checksumLowByte;
 	delay(100);
 	_HardwareSerial.print("AT+SBDWB=");
-	_HardwareSerial.print(messageLength);
+	_HardwareSerial.println(messageLength);
 	
 	delay(1000);
 	
 	for (int i = 0; i < (messageLength + 2); i++){
 		_HardwareSerial.print(messageArray[i]); 
 	}
+	_HardwareSerial.println();
 	Serial.println(F("Message Loaded in 9602 MOQueue"));
 	
 	
