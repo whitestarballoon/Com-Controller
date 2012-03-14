@@ -33,12 +33,14 @@ void SatCommMgr::update(void)
 {
         char lstr[100];
         //FIX vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv  - use some sort of global variable for satSimulatorConnected
-        //if(_satModem.isSatAvailable() || satSimulatorConnected == true)
+        //if(_satModem.isSatAvailable() == true )
         if(_satModem.isSatAvailable())
         { 
                 if ( millis() - _last_millis > 1000)
                 {  
                         //Serial.println(F("SCM:update:Check Signal"));
+                        Serial.print("!");
+                        /*
                         char signal = _satModem.checkSignal();
                         int chars;
                         if ((signal == '0') || (signal == (char)255))   // 255 indicates no network available
@@ -49,6 +51,8 @@ void SatCommMgr::update(void)
                                 if ( chars >= 100 ) lstr[100]=0; 
                         }
                         DebugMsg::msg("CC",'I',lstr);
+                        */
+                        DebugMsg::msg("CC",'I',"SIG-OK");
 
                         _last_millis = millis();
                 }
