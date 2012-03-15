@@ -554,6 +554,7 @@ bool Iridium9602::initiateSBDSession(unsigned int timeout)
         return sendCommandandExpectPrefix(F("AT+SBDIX"), F("OK"), timeout);
 }
 
+#if 0
 bool Iridium9602::handleUnsolisitedResponse(unsigned int timeout)
 {
         unsigned int starttime = millis();
@@ -562,4 +563,5 @@ bool Iridium9602::handleUnsolisitedResponse(unsigned int timeout)
 
         } while(millis() - starttime < timeout);
 }
+#endif
 
