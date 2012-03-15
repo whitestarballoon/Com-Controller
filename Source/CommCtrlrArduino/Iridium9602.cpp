@@ -1,11 +1,9 @@
 
-
 #if (ARDUINO >= 100)
 #include <Arduino.h>
 #else
 #include <WProgram.h>
 #endif
-
 
 #include <avr/pgmspace.h>
 #include <string.h>
@@ -14,13 +12,16 @@
 #include "Iridium9602.h"
 #include "DebugMsg.h"
 
+/* define to enable debug messages */
+#define _WS_DEBUG 1
+
 /* from CommCtrlArduino.ino */
 void initIridiumNetworkInterrupt();
 
 extern volatile int NetworkAvailableJustChanged;
 extern volatile int SatelliteNetworkAvailable;
 
-Iridium9602::Iridium9602(HardwareSerial& sPort) : _HardwareSerial(sPort), _rcvIdx(-1)
+Iridium9602::Iridium9602(HardwareSerial& sPort) : _HardwareSerial(sPort), _rcvIdx(0)
 {
 }
 
@@ -28,7 +29,7 @@ Iridium9602::Iridium9602(HardwareSerial& sPort) : _HardwareSerial(sPort), _rcvId
 
 void Iridium9602::initModem()
 {
-        _rcvIdx = -1;
+        _rcvIdx = 0;
         _bRing = false;
         _iMessagesWaiting = 0;
         Serial.println(F("Iridium9602 settling while off..."));
@@ -70,149 +71,42 @@ void Iridium9602::initModem()
                 DebugMsg::msg_P("SAT",'E',PSTR("!! Modem did not complete boot sequence. !!"));
         }
 
-        // Wait until the Modem wants to talk nicely with OK's
-        do {
-                { //Delay without the delay command
-                        unsigned long millistart = millis();
-                        while ( millis() < millistart + 3000 ) {
-                        }
-                }
-                _HardwareSerial.println("AT");
-        } while ( ! expectPrefix("OK",2,1) );
+        while(!sendCommandandExpectPrefix(F("AT"), F("OK"), 500)) {
+#if _WS_DEBUG
+                DebugMsg::msg_P("SAT", 'I', PSTR(" Modem is not talking to me yet"));
+#endif
+        }
+        DebugMsg::msg_P("SAT", 'I', PSTR(" Modem talked to me"));
 
-        //Serial.println("SUCCESS");
-        //return;
-
-        //Set Serial Character Echo Off √
-        _HardwareSerial.println("ATE0");
-        expectPrefix("OK",2,1);
-        flushIncomingMsg();
+        //Set Serial Character Echo Off 
+        sendCommandandExpectPrefix(F("ATE0"), F("OK"), 1000);
 
         //Set modem to not use flow control handshaking during SBD messaging √
-        flushIncomingMsg();
-        _HardwareSerial.println("AT&K0");
-        expectPrefix("OK",2,1);
-        flushIncomingMsg(); 	
-
+        sendCommandandExpectPrefix(F("AT&K0"), F("OK"), 1000);
 
         //Set response quiet mode - 0 = responses ARE sent to arduino from modem √
-        _HardwareSerial.println("ATQ0");
-        expectPrefix("OK",2,1);
-        flushIncomingMsg();
-
+        sendCommandandExpectPrefix(F("ATQ0"), F("OK"), 1000);
 
         enableIncommingMsgAlert(false);
 
-
         // Write the defaults to the modem and use default and flush to eeprom √
-        _HardwareSerial.println("AT&W0");
-        expectPrefix("OK",2,1);
-        flushIncomingMsg();
+        sendCommandandExpectPrefix(F("AT&W0"), F("OK"), 1000);
 
-        //Designate Default Reset Profile √
-        _HardwareSerial.println("AT&Y0");
-        expectPrefix("OK",2,1);
-        flushIncomingMsg();
-       
-}
-
-/*
-   boolean Iridium9602::checkIncomingMsg(void)
-   {
-   unsigned char inChar;
-   boolean bMsgAvailable = false;
-   Serial.println("CI:S");
-   while (_HardwareSerial.available())
-   {
-   inChar = (unsigned char)_HardwareSerial.read();
-//Serial.print("->"); Serial.println( (char) inChar );    
-if ( _rcvIdx < 0 && ( inChar == 13 || inChar == 10)) continue;  // Ignore Leading CR's & LF's
-
-_receivedCmd[++_rcvIdx] = inChar;
-_receivedCmd[_rcvIdx+1] = '\0'; 
-if (_rcvIdx >= 1 && _receivedCmd[_rcvIdx-2] == 13 && _receivedCmd[_rcvIdx-1] == 10 )
-{
-// We have a full message from the modem
-_receivedCmd[_rcvIdx-1] = '\0';
-//Serial.print("\n==>"); Serial.print( _receivedCmd); Serial.println("<==");     
-bMsgAvailable = true;
-break;
-}
-}
-Serial.println("CI:R");
-return bMsgAvailable;
-}
-*/
-
-
-
-boolean Iridium9602::checkIncomingMsg(int timeout) // timeout in milliseconds
-{
-        unsigned long startMillis = millis();
-        //Serial.print("CI w/ TO ");Serial.println(startMillis);
-        unsigned char inChar;
-        boolean bMsgAvailable = false;
-        while ( (!bMsgAvailable )  && ( (millis() - startMillis) < timeout)  ) //&& (startMillis < millis() ) )
-        {
-                //Serial.println( _HardwareSerial.available() );
-                while (_HardwareSerial.available())
-                {
-                        inChar = (unsigned char)_HardwareSerial.read();
-                        Serial.print("->"); Serial.println( (char) inChar );    
-                        if ( _rcvIdx < 0 && ( inChar == 13 || inChar == 10)) continue;  // Ignore Leading CR's & LF's
-
-                        _receivedCmd[++_rcvIdx] = inChar;
-                        _receivedCmd[_rcvIdx+1] = '\0'; 
-                        if (_rcvIdx >= 1 && _receivedCmd[_rcvIdx-2] == 13 && _receivedCmd[_rcvIdx-1] == 10 )
-                        {
-                                // We have a full message from the modem
-                                _receivedCmd[_rcvIdx-1] = '\0';
-#ifdef printVerifiedModemSerialMessages
-                                Serial.print("-->"); Serial.print( _receivedCmd); Serial.println("<--");    
-#endif
-                                bMsgAvailable = true;
-                                break;
-                        }
-                }
-        }
-        //Serial.println("CITO:R");
-        return bMsgAvailable;
-}
-
-
-
-
-boolean Iridium9602::checkFixedLenIncomingMsg(int iLen)
-{
-        unsigned char inChar;
-        for ( int i = 0; i < (iLen * 3) ; i++ )
-        {
-                if (_HardwareSerial.available())
-                {
-                        inChar = (unsigned char)_HardwareSerial.read();
-                        _receivedCmd[++_rcvIdx] = inChar;
-                        _receivedCmd[_rcvIdx+1] = '\0';
-                        if (_rcvIdx >= (iLen + 1)/*msg + 2 chksum digits*/   ) return true;
-                } else {
-                        delay(50);
-                }
-        }
-        return false;
+        //Designate Default Reset Profile
+        sendCommandandExpectPrefix(F("AT&Y0"), F("OK"), 1000);
 }
 
 void Iridium9602::clearIncomingMsg(void)
 {
-        _rcvIdx = -1;
+        _rcvIdx = 0;
         _receivedCmd[0] = '\0';
 }
-
 
 void Iridium9602::flushIncomingMsg(void)
 {
         clearIncomingMsg();
         while (_HardwareSerial.available()) _HardwareSerial.read();
 }
-
 
 void Iridium9602::parseMessage(char * cmd)
 {
@@ -242,79 +136,202 @@ void Iridium9602::parseMessage(char * cmd)
         clearIncomingMsg();
 }
 
-
-boolean Iridium9602::expectPrefix(char * sPrefix, int iPrefixLen, int iTimeoutSeconds)
+/* implements the loop used to poll for data from the modem
+ * and call chcker_func() when ever full response is received. If the 
+ * function return true the loop will terminate, otherwise the response
+ * will be handed over to parseMassage
+ */
+bool Iridium9602::expectLoop(const void * response,
+                             unsigned int timeout,
+                             bool clear_received,
+                             bool (*checker_func)(const Iridium9602 &, const void *))
 {
-        unsigned int iInitialMillis;
-        iInitialMillis = millis();
-        while ( iInitialMillis + (iTimeoutSeconds * 1000) > millis() )
-        {
-                if ( checkIncomingMsg(1000) )
-                {
-                        Serial.print("Cmd:");
-                        Serial.println(_receivedCmd);
-                        if ( strncmp(_receivedCmd, sPrefix, iPrefixLen ) == 0 ) 
-                        {
-#ifdef printExpectings
-                                Serial.print(F("Expecting: ")); Serial.println(sPrefix);
-                                Serial.println(F(" Found"));
-#endif
-                                return true;
-                        }
-#ifdef printExpectings
-                        Serial.print(F("Expecting: ")); Serial.println(sPrefix);
-                        Serial.print(F(", but found: "));
-                        Serial.println(_receivedCmd);
-#endif
-                        // If it is not the expected Message go ahead and parse to see if it is something unsolisited.
-                        parseMessage(_receivedCmd);
-                }
+        unsigned int starttime = millis();
+
+#if _WS_DEBUG
+        if (_rcvIdx != 0) {
+                DebugMsg::msg_P("SAT", 'D', PSTR("_rcvIdx is not 0 at start of %s"), __func__);
         }
-        DebugMsg::msg_P("SAT",'W',PSTR("EXPECTED RESPONSE FROM MODEM NOT FOUND!\n"));
+#endif
+        /* always run at least one loop iteration */
+        do {
+                /* time left */
+                unsigned int to = timeout - (millis() - starttime);
+                /* make sure that we don't pass in 0 or we'll block */
+                if (to == 0) to = 1; /* use 1 ms */
+
+                if (!checkIncomingCRLF(to)) {
+#if _WS_DEBUG
+                        DebugMsg::msg_P("SAT", 'D', PSTR("checkIncomingCRLF() timeout in %s"), __func__);
+#endif
+                        /* no more time left and no \r\n terminated string received */
+                        return false;
+                }
+
+
+                if (checker_func(*this, response)) {
+#if _WS_DEBUG
+                        Serial.print(F("  <-- expected "));
+                        Serial.println(_receivedCmd);
+#endif
+                        if (clear_received) {
+                                clearIncomingMsg();
+                        }
+                        return true;
+                }
+
+#if _WS_DEBUG
+                Serial.print(F("  <-- unexpected "));
+                Serial.println(_receivedCmd);
+#endif
+                /* did not match the desired reponse, parse for asynchronous stuff */
+                parseMessage(_receivedCmd);
+        } while(millis() - starttime < timeout);
+}
+
+static bool __prefixCheck(const Iridium9602 & sat, const void * data)
+{
+
+        /* If we are here then _receivedCmd should have the response */
+        if (strncmp(sat.get_receivedCmd(), (const char *)data, strlen((const char *)data)) == 0) {
+                return true;
+        }
+
         return false;
 }
 
-
-void Iridium9602::checkIncomingCRLF()
+bool Iridium9602::expectPrefix(const char * response,
+                               unsigned int timeout,
+                               bool clear_received)
 {
-  char inChar;
-  Serial.print(F("Modem response: "));
-  do 
-  {
-    if (_rcvIdx >= MAX_RECV_BUFFER) {
-      Serial.write((uint8_t *)_receivedCmd, sizeof(_receivedCmd));
-      _rcvIdx = 0;
-    }
-    if (_HardwareSerial.available())
-    {
-      inChar = _HardwareSerial.read();
-      _receivedCmd[++_rcvIdx] = (unsigned char )inChar;
-      if (_rcvIdx > 2 && _receivedCmd[_rcvIdx - 1] == '\r' && _receivedCmd[_rcvIdx] == '\n') {
-        Serial.write((uint8_t *)_receivedCmd, _rcvIdx);
-        _rcvIdx = 0;
-        break;
-      }
-    } else {
-      delay(50);
-    }
-  } while(true);
-  Serial.println("");
+
+        return expectLoop(response, timeout, clear_received, __prefixCheck);
+}
+
+static bool __prefixCheck_P(const Iridium9602 & sat, const void * data)
+{
+        /* If we are here then _receivedCmd should have the response */
+        if (strcmp_P(sat.get_receivedCmd(), (PGM_P)data) >= 0) {
+                return true;
+        }
+
+        return false;
+}
+
+bool Iridium9602::expectPrefix(const __FlashStringHelper * response,
+                               unsigned int timeout,
+                               bool clear_received)
+{
+        return expectLoop(response, timeout, clear_received, __prefixCheck_P);
+}
+
+void Iridium9602::sendCommand(const char * command)
+{
+        _HardwareSerial.print(command);
+        _HardwareSerial.print("\r\n");
+
+#if _WS_DEBUG
+        Serial.print(F(" --> >"));
+        Serial.println(command);
+
+#endif
+}
+
+void Iridium9602::sendCommand(const __FlashStringHelper * command)
+{
+
+        _HardwareSerial.print(command);
+        _HardwareSerial.print("\r\n");
+
+#if _WS_DEBUG
+        Serial.print(F(" --> >"));
+        Serial.println(command);
+#endif
+}
+
+bool Iridium9602::sendCommandandExpectPrefix(const char * command,
+                                             const char * response,
+                                             unsigned int timeout,
+                                             bool clear_received)
+{
+        sendCommand(command);
+        return expectPrefix(response, timeout, clear_received);
+}
+
+bool Iridium9602::sendCommandandExpectPrefix(const __FlashStringHelper * command,
+                                             const __FlashStringHelper * response,
+                                             unsigned int timeout,
+                                             bool clear_received)
+{
+        sendCommand(command);
+        return expectPrefix(response, timeout, clear_received);
+}
+
+bool Iridium9602::checkIncomingCRLF(unsigned int timeout)
+{
+        unsigned int endtime = 0;
+        char inChar;
+
+        /* calculate end time for our loop */
+        if (timeout > 0) {
+                endtime = millis() + timeout;
+        }
+
+        /* execute at leat once */
+        do 
+        {
+                /* this is here to keep on reading as long as modem says that 
+                 * data is available with out caring for the timeout
+                 */
+quick_restart:
+                /* want to make sure that we have enough space in the buffer to
+                 * null terminate it
+                */
+                if (_rcvIdx >= MAX_RECV_BUFFER - 1) {
+                        /* at this point the things are screwed up enough that a reboot is best */
+#if _WS_DEBUG
+                        _receivedCmd[_rcvIdx] = '\0';
+                        Serial.write((uint8_t *)_receivedCmd, sizeof(_receivedCmd));
+#endif
+                        DebugMsg::msg_P("SAT", 'E', PSTR("Ran out of space in _receivedCmd buffer, current buffer:\n%s\n"), _receivedCmd);
+                        clearIncomingMsg();
+                }
+
+                if (_HardwareSerial.available())
+                {
+                        inChar = _HardwareSerial.read();
+                        /* ignore white space chars at start of line */
+                        if (_rcvIdx == 0 && (inChar == '\r' || inChar == '\n')) continue;
+                        _receivedCmd[_rcvIdx++] = (unsigned char )inChar;
+                        _receivedCmd[_rcvIdx] = 0;
+                        if (_rcvIdx >= 2 && _receivedCmd[_rcvIdx - 2] == '\r' && _receivedCmd[_rcvIdx - 1] == '\n') {
+                                /* get rid of trailing white spaces */
+                                while (_receivedCmd[_rcvIdx-1] == '\r' || _receivedCmd[_rcvIdx-1] == '\n') {
+                                        _receivedCmd[--_rcvIdx] = '\0';
+                                }
+                                return true;
+                        }
+                        goto quick_restart;
+                }
+        /*
+         * second compound statement will only execute if
+         * timeout != 0.
+         *
+         * Will loop as long as timeout is 0 or endtime
+         * is less than current time (millis())
+         */
+        } while(timeout == 0 || millis() < endtime);
+
+        return false;
 }
 
 char Iridium9602::checkSignal()
 {
-
-        //Serial.println(F("IRID:Check Signal:Start"));
-        clearIncomingMsg();
-        _HardwareSerial.print("AT+CSQF\r"); // Use Fast Method
-
-        if (expectPrefix("+CSQF:",6, 5) )
-        {
+        if (sendCommandandExpectPrefix("AT+CSQF", "+CSQF:", 3000, false)) {
                 signal = _receivedCmd[6];
         } else {
                 signal = '\0'; // Return a null if unable to get a response
         }
-        //Serial.println(F("IRID:Check Signal:Return"));
 
         return signal;
 }
@@ -402,26 +419,17 @@ boolean Iridium9602::sendMsg( unsigned char * msg, int length)
         return false;
 }
 
-
-
-
-
 void Iridium9602::enableIncommingMsgAlert(boolean bEnable)
 {
 
         if (bEnable)
         {
-                _HardwareSerial.println("AT+CIER=1,1,0,0");
-                expectPrefix("OK",2,4);
-                _HardwareSerial.println("AT+SBDMTA=1");
-                expectPrefix("OK",2,4);
+                sendCommandandExpectPrefix(F("AT+CIER=1,1,0,0"), F("OK"), 1000);
+                sendCommandandExpectPrefix(F("AT+SBDMTA=1"), F("OK"), 1000);
         } else {
-                _HardwareSerial.println("AT+CIER=0,0,0,0");
-                expectPrefix("OK",2,4);
-                _HardwareSerial.println("AT+SBDMTA=0");
-                expectPrefix("OK",2,4);
+                sendCommandandExpectPrefix(F("AT+CIER=0,0,0,0"), F("OK"), 1000);
+                sendCommandandExpectPrefix(F("AT+SBDMTA=0"), F("OK"), 1000);
         }
-        flushIncomingMsg();
 }
 
 
@@ -449,8 +457,8 @@ boolean Iridium9602::isSatAvailable(void)
 
 void Iridium9602::powerOff(void)
 {
-        _HardwareSerial.println("AT+*F");      //Make sat modem prepare for poweroff
-        expectPrefix("OK",2,10);  //Wait until OK for up to 10 seconds
+        sendCommandandExpectPrefix(F("AT+*F"), F("OK"), 10000);      //Make sat modem prepare for poweroff
+        //Wait until OK for up to 10 seconds
         digitalWrite(pinModemPowerSwitch,LOW);  //Power modem off.
 }
 
@@ -471,83 +479,87 @@ boolean Iridium9602::isModemOn(void)
 boolean Iridium9602::testForSatSimulatorPresence(void)
 {
         for (int i = 0; i < 10; i++) {
-                _HardwareSerial.println("RUASIM?");      //Ask if modem is really a simulator
-                if(expectPrefix("YES",3,1))
+                if (sendCommandandExpectPrefix(F("RUASIM?"), F("YES"), 500))      //Ask if modem is really a simulator
                 {
                         return true;
                 }
         }
+
+        return false;
 }
 
 
 
 //FUNCTION: Write binary data to sat modem MO Queue 
-   void Iridium9602::loadMOMessage(unsigned char* messageArray, int messageLength) 
+bool Iridium9602::loadMOMessage(unsigned char* messageArray, int messageLength) 
 {
-   
+        //Compute Checksum
+        unsigned int checksum = 0;
+        char buf[15];
+        byte checksumHighByte;
+        byte checksumLowByte;
+        //Checksum is 2-byte summation of entire SBD message, high order byte first.  
+        for (int i = 0; i < messageLength; i++){
+                checksum += messageArray[i]; 
+        }
+        checksumHighByte = highByte(checksum);
+        checksumLowByte = lowByte(checksum);
+        snprintf(buf, sizeof(buf), "AT+SBDWB=%d", messageLength);
+        sendCommand(buf);
 
-  //Compute Checksum
-    unsigned int checksum = 0;
-    char buf[10];
-    byte checksumHighByte;
-    byte checksumLowByte;
-    String localstring;
-	//Checksum is 2-byte summation of entire SBD message, high order byte first.  
-	for (int i = 0; i < messageLength; i++){
-		checksum += messageArray[i]; 
-	}
-	checksumHighByte = highByte(checksum);
-	checksumLowByte = lowByte(checksum);
-#if 0
-	messageArray[messageLength] = checksumHighByte;
-	messageArray[messageLength + 1] = checksumLowByte;
-	delay(100);
-#endif
-	_HardwareSerial.print("AT+SBDWB=");
-	_HardwareSerial.println(messageLength);
-	checkIncomingCRLF();
-//	delay(1000);
-	
-#if 0
-	for (int i = 0; i < (messageLength + 2); i++){
-		_HardwareSerial.print(messageArray[i]); 
-	}
-#else
+        if (!expectPrefix(F("READY"), 1000)) return false;
+
+#ifdef _WS_DEBUG
         Serial.print(F("Starting ... ck:"));
         sprintf(buf, "%x\n", checksum);
         Serial.print(buf);
 
-	for (int i = 0; i < messageLength; i++){
-          sprintf(buf, "%02x ", messageArray[i]);
-          Serial.print(buf);
-	}
+        for (int i = 0; i < messageLength; i++){
+                sprintf(buf, "%02x ", messageArray[i]);
+                Serial.print(buf);
+        }
+#endif
 
-        _HardwareSerial.write(messageArray, messageLength);
-        _HardwareSerial.write(&checksumHighByte, 1);
-        _HardwareSerial.write(&checksumLowByte, 1);
-        //_HardwareSerial.write((uint8_t *)checksum, 2);
+        /* write message length */
+        checksum = _HardwareSerial.write(messageArray, messageLength);
+        /* write checksum bytes */
+        checksum += _HardwareSerial.write(&checksumHighByte, 1);
+        checksum += _HardwareSerial.write(&checksumLowByte, 1);
 
+        /* check that we wrote expected number of bytes write calls above failed */
+        if (checksum != messageLength + 2) return false;
+
+#ifdef _WS_DEBUG
         sprintf(buf, "* %02x ", checksumHighByte);
         Serial.print(buf);
         sprintf(buf, "%02x\n", checksumLowByte);
         Serial.print(buf);
-        
         Serial.println(F("DONE"));
 #endif
-	_HardwareSerial.println();
-	checkIncomingCRLF();
-	checkIncomingCRLF();
-	Serial.println(F("Message Loaded in 9602 MOQueue"));
+
+        /* XXX Don't know if new line is needed */
+        _HardwareSerial.println();
+        if (!expectPrefix(F("0"), 1000)) return false;
+        Serial.println(F("Message Loaded in 9602 MOQueue"));
+
+        return true;
 }
 
-  void Iridium9602::initiateSBDSessionHACK(void)
-  {
-  	 delay(500);
-  	 _HardwareSerial.println("AT+SBDIX");
-	checkIncomingCRLF();
-  	 Serial.println("SBD session initiated");
-  }
+bool Iridium9602::initiateSBDSession(unsigned int timeout)
+{
+#if 0
+        _HardwareSerial.println("AT+SBDD0");
+        checkIncomingCRLF(2000);
+#endif
+        return sendCommandandExpectPrefix(F("AT+SBDIX"), F("OK"), timeout);
+}
 
+bool Iridium9602::handleUnsolisitedResponse(unsigned int timeout)
+{
+        unsigned int starttime = millis();
 
+        do {
 
+        } while(millis() - starttime < timeout);
+}
 
