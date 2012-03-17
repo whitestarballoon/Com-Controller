@@ -9,12 +9,18 @@
 #include "LongMsg.h"
 #include "SatQueue.h"
 
-
 #define SatDebug
+
+static unsigned long retry_timeouts[] = {5000L,5000L,30000L,30000L,300000L};
+static unsigned int retry_timeouts_sz = sizeof(retry_timeouts) / sizeof(retry_timeouts[0]);
+static unsigned char sbuf[100];
 
 SatCommMgr::SatCommMgr(Iridium9602& sModem):_satModem(sModem), _last_millis(0)
 {
-        //satQueue = SatQueue::getInstance();
+        _retryTimeIdx = 0;
+        _lastSessionTime = 0;
+        _lastActivityTime = 0;
+        _retryTimeIdx = 0;
 }
 
 
@@ -22,8 +28,14 @@ void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
 {
         DebugMsg::msg_P("SAT",'D',PSTR("SatModem Init Start..."));
         _satModem.initModem();
-		_i2cCommMgr = i2cCommMgr;
+        _i2cCommMgr = i2cCommMgr;
         DebugMsg::msg_P("SAT",'I',PSTR("SatModem Init Completed."));
+
+  {
+    snprintf((char *)sbuf, 6, "hello");
+    _satModem.loadMOMessage((unsigned char *)sbuf,5);
+    Serial.print(F("Sent!\n"));
+  }
 
 }
 
@@ -31,15 +43,104 @@ void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
 
 void SatCommMgr::update(void)
 {
-        unsigned char lstr[100];
+        bool initiate_session = false;
+
 #if 1
-        snprintf((char *)lstr, 6, "hello");
-        _satModem.loadMOMessage((unsigned char *)lstr,5);
-        _satModem.initiateSBDSession(2000);
-        Serial.print(F("Sent!\n"));
-        while(1) ;
+
+        //DebugMsg::msg_P("CC", 'D', PSTR("Before poll()"));
+        _satModem.pollUnsolicitedResponse(200);
+        //DebugMsg::msg_P("CC", 'D', PSTR("After poll()"));
+
+        if (!_satModem.isMOMessageQueued()) {
+                /* nothing in the MO queue, reset retryTimeIdx */
+                _retryTimeIdx = 0;
+        }
+
+        if (_satModem.networkStateChanged() && _satModem.isSatAvailable()) {
+                DebugMsg::msg_P("CC", 'D',  PSTR("Modem just became available"));
+                initiate_session = true;
+                /* reset out retry array index */
+                _retryTimeIdx = 0;
+        }
+
+        if (_satModem.isSatAvailable()) {
+                //DebugMsg::msg_P("CC", 'D',  PSTR("Modem sat is available"));
+                if (_satModem.isRinging()) {
+                        DebugMsg::msg_P("CC", 'D', PSTR("Modem is ringing"));
+                        initiate_session = true;
+                }
+
+                /* there is a message in the MO queue, but no session is active,
+                 * figure out if it's time to initiate a new session
+                 * No need to do all of this if initiate_session is already true
+                 */
+                if (!initiate_session && _satModem.isMOMessageQueued() 
+                    && !_satModem.isSessionActive()) 
+                {
+                        //DebugMsg::msg_P("CC", 'D', PSTR("checking for time out"));
+                        if (millis() - _lastSessionTime > retry_timeouts[_retryTimeIdx]) {
+                                DebugMsg::msg_P("CC", 'D', PSTR("[%d] = %d --  %d ms timeout hit"), 
+                                                _retryTimeIdx,
+                                                retry_timeouts[_retryTimeIdx],
+                                                millis() - _lastSessionTime
+                                                );
+                                /* don't let _retryTimeIdx go past the end of the array */
+                                if (_retryTimeIdx + 1 < retry_timeouts_sz) {
+                                        _retryTimeIdx++;
+                                        DebugMsg::msg_P("CC", 'D', PSTR("New timeout [%d] = %d"),
+                                                        _retryTimeIdx, retry_timeouts[_retryTimeIdx]);
+                                }
+                                /* reset the counter to start from now */
+                                _lastSessionTime = millis();
+                                initiate_session = 1;
+                        }
+                }
+                
+                /* check if maximum time between session has passed */
+                if (!initiate_session && _lastSessionTime - millis() > satForceSBDSessionInterval) {
+                        initiate_session = 1;
+                        _lastSessionTime = millis();
+                }
+
+                //DebugMsg::msg_P("CC", 'D', PSTR("is: %d sa: %d, lst: %d"), initiate_session, 
+                //                _satModem.isSessionActive(), _lastSessionTime);
+
+                if (initiate_session && !_satModem.isSessionActive()) {
+                        if (!_satModem.initiateSBDSession(satResponseTimeout * 3)) {
+                                DebugMsg::msg_P("CC", 'W', PSTR("Coulnd't initiate session in time"));
+                        }
+                }
+                
+        }
+
+        /* now pull data from SatQueue into the MOQueue */
+        if ( SatQueue::getInstance().isMsgAvail() ) // Got a  message that needs to be sent
+        {
+                SatQueue & q = SatQueue::getInstance();
+                int i;
+                char buf[20];
+                memset(sbuf, 0, sizeof(sbuf));
+                LongMsg msg;
+                q.read(msg);
+
+                //DebugMsg::msg("SC",'I'," sizeof(%d)", sizeof(sbuf));
+                int msgLen = msg.getFormattedMsg((unsigned char *)sbuf, sizeof(sbuf));
+#if 1
+                Serial.print(F("==========--> "));
+                for(i = 0; i < msgLen; i++) {
+                        sprintf(buf, "%x ", sbuf[i]);
+                        Serial.print(buf);
+                }
+                Serial.print(msgLen);
+                Serial.println("<--==========");
+                _satModem.loadMOMessage((unsigned char *)sbuf, (int)msgLen);
+
 #endif
-        if(1 || _satModem.isSatAvailable())
+        }
+
+        return;
+#endif
+        if(_satModem.isSatAvailable())
         { 
 
                 if ( (millis() - _last_millis) > 1000)
@@ -68,28 +169,26 @@ void SatCommMgr::update(void)
                         }
                         */          
 
-
-
                         if ( SatQueue::getInstance().isMsgAvail() ) // Got a  message that needs to be sent
                         {
                                 SatQueue & q = SatQueue::getInstance();
                                 int i;
                                 char buf[20];
-                                memset(lstr, 0, sizeof(lstr));
+                                memset(sbuf, 0, sizeof(sbuf));
                                 LongMsg msg;
                                 q.read(msg);
 
-                                //DebugMsg::msg("SC",'I'," sizeof(%d)", sizeof(lstr));
-                                int msgLen = msg.getFormattedMsg((unsigned char *)lstr, sizeof(lstr));
+                                //DebugMsg::msg("SC",'I'," sizeof(%d)", sizeof(sbuf));
+                                int msgLen = msg.getFormattedMsg((unsigned char *)sbuf, sizeof(sbuf));
 #if 1
                                 Serial.print(F("==========--> "));
                                 for(i = 0; i < msgLen; i++) {
-                                        sprintf(buf, "%x ", lstr[i]);
+                                        sprintf(buf, "%x ", sbuf[i]);
                                         Serial.print(buf);
                                 }
                                 Serial.print(msgLen);
                                 Serial.println("<--==========");
-                                _satModem.loadMOMessage((unsigned char *)lstr,(int)msgLen);
+                                _satModem.loadMOMessage((unsigned char *)sbuf, (int)msgLen);
                                 _satModem.initiateSBDSession(2000);
 
 #endif

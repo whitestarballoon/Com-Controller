@@ -185,6 +185,7 @@ void I2CCommMgr::I2CParse(I2CMsg i2cMsg)
   {
     Serial.print(i2cMsg.i2cData[i],HEX); Serial.print(" ");
   }
+  Serial.println();
   Serial.flush();
   switch(i2cMsg.i2cRxCommand){
 

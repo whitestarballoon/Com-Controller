@@ -35,10 +35,15 @@ private:
         unsigned long _last_millis;
         //SatQueue& satQueue;
         I2CCommMgr * _i2cCommMgr;
+        /* last time a session was know to be initiated */
+        unsigned long _lastSessionTime;
+        /* last time we tried to initiate a session */
+        unsigned long _lastActivityTime;
+        int _retryTimeIdx;
 
-		void parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int packLen);
-		void satCommCommandProc(unsigned char * packetBufferLocal);
-		void satConfirmTimerCHG(byte timerValue);
+        void parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int packLen);
+        void satCommCommandProc(unsigned char * packetBufferLocal);
+        void satConfirmTimerCHG(byte timerValue);
 		
 };
 

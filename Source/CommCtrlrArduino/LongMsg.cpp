@@ -15,7 +15,7 @@
 void LongMsg::set(byte bStartAddrH, byte bStartAddrL, byte bEndAddrH, byte bEndAddrL)
 {
 
-        DebugMsg::msg("LM",'E'," LongMsg::set(%d, %d, %d, %d)\n", bStartAddrH, bStartAddrL,
+        DebugMsg::msg_P("LM",'E', PSTR(" LongMsg::set(%d, %d, %d, %d)"), bStartAddrH, bStartAddrL,
                                     bEndAddrH, bEndAddrL);
 
 
@@ -28,15 +28,16 @@ int LongMsg::getFormattedMsg(unsigned char * data, int data_sz)
         byte gottenLength = getFormattedLength();
         int i = 0;
 
-        DebugMsg::msg("LM", 'I', " s: %x e: %x gottenLength: %d data_sz: %d", _StartAddr, _EndAddr, gottenLength, data_sz);
+        DebugMsg::msg_P("LM", 'I', PSTR(" s: %x e: %x gottenLength: %d data_sz: %d"),
+                        _StartAddr, _EndAddr, gottenLength, data_sz);
         if ( gottenLength <= 0) {
                 return -1;
         }
 
         if (gottenLength > data_sz) {
         
-                DebugMsg::msg("LM",'E'," buf not big enough for FormattedMsg(%d) need %d"),
-                                            data_sz, gottenLength;
+                DebugMsg::msg_P("LM",'E',PSTR("buf not big enough for FormattedMsg(%d) need %d"),
+                                            data_sz, gottenLength);
                 return -1;
         }
 
@@ -70,7 +71,7 @@ byte LongMsg::I2CeePROMRead(byte device, unsigned int addr)
 
                 i2csentStatus = Wire.endTransmission();
                 if (i2csentStatus != 0){
-                        DebugMsg::msg("LM",'E'," i2cTXErr: %d ",i2csentStatus);
+                        DebugMsg::msg_P("LM",'E', PSTR(" i2cTXErr: %d "), i2csentStatus);
                         //Random delay routine:
                         delayMicroseconds(random(3000));
                 } 
