@@ -11,7 +11,7 @@
 
 #define SatDebug
 
-static unsigned long retry_timeouts[] = {5000L,5000L,30000L,30000L,300000L};
+static unsigned long retry_timeouts[] = {1000L,5000L,30000L,30000L,30000L};
 static unsigned int retry_timeouts_sz = sizeof(retry_timeouts) / sizeof(retry_timeouts[0]);
 static unsigned char sbuf[100];
 
@@ -32,6 +32,7 @@ void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
         DebugMsg::msg_P("SAT",'I',PSTR("SatModem Init Completed."));
 
   {
+    
     snprintf((char *)sbuf, 6, "hello");
     _satModem.loadMOMessage((unsigned char *)sbuf,5);
     Serial.print(F("Sent!\n"));
@@ -48,8 +49,9 @@ void SatCommMgr::update(void)
 #if 1
 
         if (millis() - _last_tick > 10000UL) {
-                DebugMsg::msg("TiCk", 't', 
-                              (char *)(_satModem.isSatAvailable() ? "!" : "."));
+                //DebugMsg::msg("TiCk", 't', 
+                             // (char *)(_satModem.isSatAvailable() ? "!" : "."));
+                Serial.print((_satModem.isSatAvailable() ? "!" : "."));
                 _last_tick = millis();
         }
 
@@ -84,17 +86,18 @@ void SatCommMgr::update(void)
                     && !_satModem.isSessionActive()) 
                 {
                         //DebugMsg::msg_P("CC", 'D', PSTR("checking for time out"));
-                        if (millis() - _lastSessionTime > retry_timeouts[_retryTimeIdx]) {
+                        unsigned int randomizedRetryTime = random(-500,500)+retry_timeouts[_retryTimeIdx];
+                        if (millis() - _lastSessionTime > randomizedRetryTime) {
                                 DebugMsg::msg_P("CC", 'D', PSTR("[%d] = %d --  %d ms timeout hit"), 
                                                 _retryTimeIdx,
-                                                retry_timeouts[_retryTimeIdx],
+                                                randomizedRetryTime,
                                                 millis() - _lastSessionTime
                                                 );
                                 /* don't let _retryTimeIdx go past the end of the array */
                                 if (_retryTimeIdx + 1 < retry_timeouts_sz) {
                                         _retryTimeIdx++;
                                         DebugMsg::msg_P("CC", 'D', PSTR("New timeout [%d] = %d"),
-                                                        _retryTimeIdx, retry_timeouts[_retryTimeIdx]);
+                                                        _retryTimeIdx, randomizedRetryTime);
                                 }
                                 /* reset the counter to start from now */
                                 _lastSessionTime = millis();
