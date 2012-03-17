@@ -52,6 +52,8 @@ boolean SatQueue::write(LongMsg & msg)
   byte localBuffer[10];
   
   memset(localBuffer, 0, sizeof(localBuffer));
+
+#if 0
   Serial.println(F("write() called?"));
   Serial.print(F("SQ-I: Write Data V"));
   //msg.getFormattedMsg(localBuffer,4);
@@ -62,6 +64,7 @@ boolean SatQueue::write(LongMsg & msg)
   }
   Serial.println();
   Serial.flush();
+#endif
   
         if ( _writeAvailable == 0 ) return false;
         _lmQueue[_writePtr] = msg;

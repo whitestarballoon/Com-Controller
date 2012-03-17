@@ -44,8 +44,14 @@ void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
 void SatCommMgr::update(void)
 {
         bool initiate_session = false;
-
+        static unsigned long _last_tick = millis();
 #if 1
+
+        if (millis() - _last_tick > 10000UL) {
+                DebugMsg::msg("TiCk", 't', 
+                              (char *)(_satModem.isSatAvailable() ? "!" : "."));
+                _last_tick = millis();
+        }
 
         //DebugMsg::msg_P("CC", 'D', PSTR("Before poll()"));
         _satModem.pollUnsolicitedResponse(200);
