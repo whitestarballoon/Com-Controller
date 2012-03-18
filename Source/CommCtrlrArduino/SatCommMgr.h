@@ -40,6 +40,7 @@ private:
         /* last time we tried to initiate a session */
         unsigned long _lastActivityTime;
         int _retryTimeIdx;
+        unsigned long  _randomizedRetryTime;
 
         void parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int packLen);
         void satCommCommandProc(unsigned char * packetBufferLocal);

@@ -11,7 +11,7 @@
 
 #define SatDebug
 
-static unsigned long retry_timeouts[] = {1000L,5000L,30000L,30000L,30000L};
+static unsigned long retry_timeouts[] = {1000L,5000L,3000L,30000L,30000L};
 static unsigned int retry_timeouts_sz = sizeof(retry_timeouts) / sizeof(retry_timeouts[0]);
 static unsigned char sbuf[100];
 
@@ -21,8 +21,8 @@ SatCommMgr::SatCommMgr(Iridium9602& sModem):_satModem(sModem), _last_millis(0)
         _lastSessionTime = 0;
         _lastActivityTime = 0;
         _retryTimeIdx = 0;
+        _randomizedRetryTime = 0;
 }
-
 
 void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
 {
@@ -45,15 +45,16 @@ void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
 void SatCommMgr::update(void)
 {
         bool initiate_session = false;
-        static unsigned long _last_tick = millis();
-#if 1
 
+#if 1
+        static unsigned long _last_tick = millis();
         if (millis() - _last_tick > 10000UL) {
-                //DebugMsg::msg("TiCk", 't', 
-                             // (char *)(_satModem.isSatAvailable() ? "!" : "."));
-                Serial.print((_satModem.isSatAvailable() ? "!" : "."));
+                DebugMsg::msg("TiCk", 't', 
+                              (char *)(_satModem.isSatAvailable() ? "!" : "."));
+                //Serial.print((_satModem.isSatAvailable() ? "!" : "."));
                 _last_tick = millis();
         }
+#endif
 
         //DebugMsg::msg_P("CC", 'D', PSTR("Before poll()"));
         _satModem.pollUnsolicitedResponse(200);
@@ -86,19 +87,27 @@ void SatCommMgr::update(void)
                     && !_satModem.isSessionActive()) 
                 {
                         //DebugMsg::msg_P("CC", 'D', PSTR("checking for time out"));
-                        unsigned int randomizedRetryTime = random(-500,500)+retry_timeouts[_retryTimeIdx];
-                        if (millis() - _lastSessionTime > randomizedRetryTime) {
-                                DebugMsg::msg_P("CC", 'D', PSTR("[%d] = %d --  %d ms timeout hit"), 
+                        if (millis() - _lastSessionTime > _randomizedRetryTime) {
+#if 0
+                                DebugMsg::msg_P("CC", 'D', PSTR("[%d] = %lu --  %lu ms timeout hit"), 
                                                 _retryTimeIdx,
-                                                randomizedRetryTime,
-                                                millis() - _lastSessionTime
-                                                );
+                                                _randomizedRetryTime,
+                                                millis() - _lastSessionTime);
+#endif
                                 /* don't let _retryTimeIdx go past the end of the array */
                                 if (_retryTimeIdx + 1 < retry_timeouts_sz) {
                                         _retryTimeIdx++;
-                                        DebugMsg::msg_P("CC", 'D', PSTR("New timeout [%d] = %d"),
-                                                        _retryTimeIdx, randomizedRetryTime);
                                 }
+                                /*
+                                 * Setup the randomized value that we will actually use for hte
+                                 * time out, it would be from 10-ms to maximum of what's in
+                                 * the array.
+                                 */
+                                _randomizedRetryTime = random(10, retry_timeouts[_retryTimeIdx]);
+#if 0
+                                DebugMsg::msg_P("CC", 'D', PSTR("New timeout [%d] = %lu"),
+                                                _retryTimeIdx, _randomizedRetryTime);
+#endif
                                 /* reset the counter to start from now */
                                 _lastSessionTime = millis();
                                 initiate_session = 1;
@@ -106,24 +115,30 @@ void SatCommMgr::update(void)
                 }
                 
                 /* check if maximum time between session has passed */
-                if (!initiate_session && _lastSessionTime - millis() > satForceSBDSessionInterval) {
+                if (!initiate_session && millis() - _lastSessionTime  > satForceSBDSessionInterval) {
+                        DebugMsg::msg_P("CC", 'D', PSTR("force SBD session"));
                         initiate_session = 1;
                         _lastSessionTime = millis();
                 }
 
-                //DebugMsg::msg_P("CC", 'D', PSTR("is: %d sa: %d, lst: %d"), initiate_session, 
-                //                _satModem.isSessionActive(), _lastSessionTime);
+#if 0
+                DebugMsg::msg_P("CC", 'D', PSTR("is: %d sa: %d, lst: %lu to: %lu tl: %lu ms: %lu"),
+                                initiate_session, 
+                                _satModem.isSessionActive(),
+                                _lastSessionTime,
+                                _randomizedRetryTime,
+                                (_randomizedRetryTime - (millis() - _lastSessionTime) > 0 ?
+                                 _randomizedRetryTime - (millis() - _lastSessionTime) : 0),
+                                millis());
+#endif
 
                 if (initiate_session && !_satModem.isSessionActive()) {
-                        if (!_satModem.initiateSBDSession(satResponseTimeout * 3)) {
-                                DebugMsg::msg_P("CC", 'W', PSTR("Coulnd't initiate session in time"));
-                        }
+                        _satModem.initiateSBDSession(satResponseTimeout);
                 }
-                
         }
 
         /* now pull data from SatQueue into the MOQueue */
-        if ( SatQueue::getInstance().isMsgAvail() ) // Got a  message that needs to be sent
+        if (SatQueue::getInstance().isMsgAvail()) // Got a  message that needs to be sent
         {
                 SatQueue & q = SatQueue::getInstance();
                 int i;
@@ -134,7 +149,7 @@ void SatCommMgr::update(void)
 
                 //DebugMsg::msg("SC",'I'," sizeof(%d)", sizeof(sbuf));
                 int msgLen = msg.getFormattedMsg((unsigned char *)sbuf, sizeof(sbuf));
-#if 1
+#if 0
                 Serial.print(F("==========--> "));
                 for(i = 0; i < msgLen; i++) {
                         sprintf(buf, "%x ", sbuf[i]);
@@ -142,13 +157,12 @@ void SatCommMgr::update(void)
                 }
                 Serial.print(msgLen);
                 Serial.println("<--==========");
+#endif
                 _satModem.loadMOMessage((unsigned char *)sbuf, (int)msgLen);
 
-#endif
         }
 
         return;
-#endif
         if(_satModem.isSatAvailable())
         { 
 

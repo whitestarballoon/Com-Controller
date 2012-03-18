@@ -13,7 +13,7 @@
 #include "DebugMsg.h"
 
 /* define to enable debug messages */
-#define _WS_DEBUG 1
+//#define _WS_DEBUG 1
 
 /* from CommCtrlArduino.ino */
 void initIridiumNetworkInterrupt();
@@ -175,8 +175,10 @@ err_out:
 
 void Iridium9602::parseUnsolicitedResponse(char * cmd)
 {
+        /* check time session lost timeout */
+
         if (strncmp_P(_receivedCmd, PSTR("+SBDIX:"), 7) == 0) {
-                DebugMsg::msg_P("SAT", 'D', PSTR("Match SBDIX"));
+                //DebugMsg::msg_P("SAT", 'D', PSTR("Match SBDIX"));
                 int mo_st = -1, mt_st, mt_len, mt_q;
                 if (parseSBDIXResponse(_receivedCmd, &mo_st, &mt_st, &mt_len, &mt_q)) {
                     DebugMsg::msg_P("Sat", 'D', PSTR("Got good +SBDIX respponse"));
@@ -186,9 +188,11 @@ void Iridium9602::parseUnsolicitedResponse(char * cmd)
                     _MTQueued = mt_q;
                 }
 
+
                 clearIncomingMsg();
                 expectPrefix(F("OK"), satResponseTimeout);
                 _sessionInitiated = false;
+
 
                 if (_MOQueued && 
                     (mo_st == 0 ||
@@ -202,10 +206,10 @@ void Iridium9602::parseUnsolicitedResponse(char * cmd)
                         _lastSessionResult = -mo_st;
                 }
         } else if (strncmp_P(_receivedCmd, PSTR("+SBDRING"), 8) == 0) {
-                DebugMsg::msg("SAT", 'D', "Match RING");
+                //DebugMsg::msg("SAT", 'D', "Match RING");
                 _bRing = true;
         } else if (strncmp_P(_receivedCmd, PSTR("+CIEV:"), 6) == 0) {
-                DebugMsg::msg("SAT", 'D', "Match CIEV");
+                //DebugMsg::msg("SAT", 'D', "Match CIEV");
                 if (_receivedCmd[6] == '0') {
                         /* signal level 0 - 5 */
                         _signal = _receivedCmd[8] - '0';
@@ -525,6 +529,7 @@ bool Iridium9602::loadMOMessage(unsigned char* messageArray, int messageLength)
         if (!expectPrefix(F("READY"), satResponseTimeout)) return false;
 
 #ifdef _WS_DEBUG
+#if 0
         Serial.print(F("Starting ... ck:"));
         sprintf(buf, "%x\n", checksum);
         Serial.print(buf);
@@ -533,6 +538,7 @@ bool Iridium9602::loadMOMessage(unsigned char* messageArray, int messageLength)
                 sprintf(buf, "%02x ", messageArray[i]);
                 Serial.print(buf);
         }
+#endif
 #endif
 
         /* write message length */
@@ -564,7 +570,7 @@ bool Iridium9602::loadMOMessage(unsigned char* messageArray, int messageLength)
                 Serial.println(F("Couldn't get OK, if this message gets delivered it might be zero byte, verify and fix me to resend!"));
         }
 
-        Serial.println(F("Message Loaded in 9602 MOQueue"));
+        //Serial.println(F("Message Loaded in 9602 MOQueue"));
 
         _MOQueued = true;
         return true;
@@ -582,11 +588,9 @@ bool Iridium9602::initiateSBDSession(unsigned long timeout)
         if (_sessionInitiated) goto out;
 
         ret = sendCommandandExpectPrefix(F("AT+SBDIX"), F("OK"), timeout);
-        DebugMsg::msg("SAT", 'D', "-------> %d", ret);
-        if (ret) {
-                _sessionInitiated = true;
-                _bRing = false;
-        }
+        _sessionInitiated = true;
+        _bRing = false;
+        ret = true;
 
 out:
         return ret;
@@ -606,8 +610,10 @@ bool Iridium9602::pollUnsolicitedResponse(unsigned long timeout)
                 }
         } while(timeout == 0 || millis() - starttime < timeout);
 
-        if (millis() - _lastSessionTime > satSBDIXResponseLost)
+        if (millis() - _lastSessionTime > satSBDIXResponseLost) {
+                _sessionInitiated = false;
                 _lastSessionResult = 0;
+        }
 
         return false;
 }

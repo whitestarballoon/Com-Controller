@@ -15,8 +15,10 @@
 void LongMsg::set(byte bStartAddrH, byte bStartAddrL, byte bEndAddrH, byte bEndAddrL)
 {
 
+#ifdef __WS_DEBUG
         DebugMsg::msg_P("LM",'E', PSTR(" LongMsg::set(%d, %d, %d, %d)"), bStartAddrH, bStartAddrL,
                                     bEndAddrH, bEndAddrL);
+#endif
 
 
         _StartAddr = word(bStartAddrH, bStartAddrL);
@@ -28,8 +30,11 @@ int LongMsg::getFormattedMsg(unsigned char * data, int data_sz)
         byte gottenLength = getFormattedLength();
         int i = 0;
 
+#ifdef __WS_DEBUG
         DebugMsg::msg_P("LM", 'I', PSTR(" s: %x e: %x gottenLength: %d data_sz: %d"),
                         _StartAddr, _EndAddr, gottenLength, data_sz);
+
+#endif
         if ( gottenLength <= 0) {
                 return -1;
         }

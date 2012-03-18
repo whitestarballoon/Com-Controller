@@ -169,7 +169,7 @@ void I2CCommMgr::update()
     if (  I2CQueue::getInstance().count() > 0)  // Got a message that needs processing
     {
       I2CParse( I2CQueue::getInstance().read());
-      Serial.print("vvvvvvv Q:"); Serial.println(I2CQueue::getInstance().count());
+      //Serial.print("vvvvvvv Q:"); Serial.println(I2CQueue::getInstance().count());
     }
 }
 
@@ -177,7 +177,7 @@ void I2CCommMgr::update()
 
 void I2CCommMgr::I2CParse(I2CMsg i2cMsg)
 {
-
+#if 0
   //DebugMsg::msg_P("I2C",'I',PSTR("I2C Parse"));
   DebugMsg::msg("I2C",'I',("i2c Packet Rx'd. Cmd: %0x Data V "),i2cMsg.i2cRxCommand);
   Serial.flush();
@@ -187,6 +187,7 @@ void I2CCommMgr::I2CParse(I2CMsg i2cMsg)
   }
   Serial.println();
   Serial.flush();
+#endif
   switch(i2cMsg.i2cRxCommand){
 
     case i2cCmdSATTXATCRpt: 
@@ -219,7 +220,7 @@ void I2CCommMgr::I2CParse(I2CMsg i2cMsg)
 
 	  if (SatQueue::getInstance().write(msg))
 	  {
-	  	DebugMsg::msg_P("I2C",'I',PSTR("Report Stored OK."));
+	  	//DebugMsg::msg_P("I2C",'I',PSTR("Report Stored OK."));
 	  } else {
 	  	DebugMsg::msg_P("I2C",'W',PSTR("Report Store FAILED."));
 	  }
