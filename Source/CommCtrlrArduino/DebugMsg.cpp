@@ -33,7 +33,8 @@
    if ( chars >= 100 ) lstr[100]=0; 
    Serial.println(lstr);
    
-   if (_i2cCommMgr) //Function has be set
+   //if (_i2cCommMgr) //Function has be set
+      if (0) //Function has be set
    {
      chars = snprintf(lstr2, 100,  "C%s", lstr);
      //chars = snprintf(lstr2, 100,  "C:%s->%s", TimeKeeper::getInstance().getFormattedTime(),lstr);
@@ -56,7 +57,8 @@
    Serial.println(lstr);
    
    //I2C has 32 byte limit on output!
-   if (_i2cCommMgr) //Function has be set
+   //if (_i2cCommMgr) //Function has be set
+   if (0) //Function has be set
    {
      //chars = snprintf(lstr2, 100,  "C:%s->%s", TimeKeeper::getInstance().getFormattedTime(),lstr);
      chars = snprintf(lstr2, 32,  "C%s", lstr);
