@@ -214,10 +214,18 @@ void I2CCommMgr::I2CParse(I2CMsg i2cMsg)
     
     case i2cCmdSATTxFrmEEPROM: 
     { 
+      //Check for duplicate start and end addresses
+      if( (i2cMsg.i2cData[0] == i2cMsg.i2cData[2]) && (i2cMsg.i2cData[1] == i2cMsg.i2cData[3])) {
+	  	DebugMsg::msg_P("I2C",'W',PSTR("LongMsg Start and End Addrs The Same.  No Send."));
+	  	break;
+	  }
+	  
       LongMsg msg(i2cMsg.i2cData[0],i2cMsg.i2cData[1],i2cMsg.i2cData[2],i2cMsg.i2cData[3]);
-
+     
       //DebugMsg::msg_P("I2C",'I',PSTR("Store Long Message"));
+	  
 
+	  
 	  if (SatQueue::getInstance().write(msg))
 	  {
 	  	//DebugMsg::msg_P("I2C",'I',PSTR("Report Stored OK."));
