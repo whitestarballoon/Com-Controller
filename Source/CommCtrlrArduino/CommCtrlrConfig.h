@@ -47,15 +47,15 @@ const byte i2ceePROMAddr          = 0x50;           // EEPROM I2C Address
  *******************************/
 const byte satIncomingPackLenLimit = 70;             //Used to define length of buffer arrays for packet data
 const unsigned int satPowerOffMinimumTime = 2000;    //Probably 2000 millis for iridium
-const unsigned int maxTelemLenConst = 1024;          //Maximum acceptable length of telemetry packet FROM EEPROM
+const unsigned int maxTelemLenConst = 340;          //Maximum acceptable length of telemetry packet FROM EEPROM, set by Iridium MO max message size
 #define satNetworkNotAvailable = 255;
 const unsigned int LongMsgQueueLen = 20;             // Number of messages that can be in the queue to send out sat modem
 const unsigned int satResponseTimeout = 10000;       // (ms) Timeout used when waiting for response timeouts
 const unsigned int satSBDIXResponseLost = 30000;     // (ms) How much time to wait before assuming SBDIX command failed
 /* (ms) Force initiate SBD session after period of no activity i
- * currently set to 15 minutes 
+ * currently set to 120 minutes 
  */
-const unsigned long satForceSBDSessionInterval = 15 * 60 * 1000; 
+const unsigned long satForceSBDSessionInterval = 120 * 60 * 1000; 
 
 /*******************************
  *   I2C Incoming Queue
