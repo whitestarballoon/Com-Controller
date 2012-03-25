@@ -10,7 +10,7 @@
 #include <Wire.h>
 #include "LongMsg.h"
 #include "DebugMsg.h"
-
+#define __WS_DEBUG
 
 void LongMsg::set(byte bStartAddrH, byte bStartAddrL, byte bEndAddrH, byte bEndAddrL)
 {

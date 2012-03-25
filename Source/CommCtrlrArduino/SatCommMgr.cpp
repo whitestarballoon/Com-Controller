@@ -30,13 +30,14 @@ void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
         _satModem.initModem();
         _i2cCommMgr = i2cCommMgr;
         DebugMsg::msg_P("SAT",'I',PSTR("SatModem Init Completed."));
-
+#if 0
   {
     
     snprintf((char *)sbuf, 6, "hello");
     _satModem.loadMOMessage((unsigned char *)sbuf,5);
-    Serial.print(F("Sent!\n"));
+    Serial.print(F("Hello Sent!\n"));
   }
+#endif
 
 }
 
@@ -149,8 +150,8 @@ void SatCommMgr::update(void)
 
                 //DebugMsg::msg("SC",'I'," sizeof(%d)", sizeof(sbuf));
                 int msgLen = msg.getFormattedMsg((unsigned char *)sbuf, sizeof(sbuf));
-#if 0
-                Serial.print(F("==========--> "));
+#if 1
+                Serial.print(F("Message Placed in MOQ ==--> "));
                 for(i = 0; i < msgLen; i++) {
                         sprintf(buf, "%x ", sbuf[i]);
                         Serial.print(buf);
