@@ -13,7 +13,7 @@
 
 static unsigned long retry_timeouts[] = {1000L,5000L,3000L,30000L,30000L};
 static unsigned int retry_timeouts_sz = sizeof(retry_timeouts) / sizeof(retry_timeouts[0]);
-static unsigned char sbuf[100];
+static unsigned char sbuf[satMessageCharBufferSize];
 
 SatCommMgr::SatCommMgr(Iridium9602& sModem):_satModem(sModem), _last_millis(0)
 {
