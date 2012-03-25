@@ -5,6 +5,7 @@
 #define printExpectings
 #define printVerifiedModemSerialMessages
 
+
 #if (ARDUINO >= 100)
 #include <Arduino.h>
 #else
@@ -63,6 +64,7 @@ const unsigned long satForceSBDSessionInterval = 120 * 60 * 1000;
 #define I2C_MSG_QUEUE_LEN 4
 const byte I2CMsgQueueLen = I2C_MSG_QUEUE_LEN;      // Number of messages that can be in the queue of received I2C msgs
 const byte i2cMaxDataLen = 15;                      //I2C buffer length for cmd+data
+const byte UseI2CForDebugMsgs = 0; 					// 0 == NO, !0 == Yes
 
 /*******************************
  *   Constants for message payload processing (set these based on headers of sat modem provider)
@@ -70,6 +72,7 @@ const byte i2cMaxDataLen = 15;                      //I2C buffer length for cmd+
 const byte packetPayloadStartIndex = 6;  // Message content starts here in a received packet from sat modem 6 for orbcomm, may be 0 for Iridium
 const byte satIncomingMessageHeaderLength = 15;  //Length of inbound message headers, 15 for orbcomm, may be 0 for Iridium
 const byte i2cRetryLimit = 4;
+const unsigned int satMessageCharBufferSize = 340;  //Char array size for loading messages from eeprom into
 
 
 /*******************************
