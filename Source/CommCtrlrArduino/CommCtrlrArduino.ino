@@ -115,7 +115,6 @@ void loop()
 }
 
 
-//Why won't these work when accessed from Iridium9602::init function?!?!?!?!  FIX VVV
 void IridiumUpdateNetworkAvailable()
 {
 	NetworkAvailableJustChanged = true;
