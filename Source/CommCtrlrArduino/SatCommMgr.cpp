@@ -164,63 +164,7 @@ void SatCommMgr::update(void)
         }
 
         return;
-        if(_satModem.isSatAvailable())
-        { 
-
-                if ( (millis() - _last_millis) > 1000)
-                {  
-                        //Serial.println(F("SCM:update:Check Signal"));
-                        Serial.print("!");
-                        /*
-                           char signal = _satModem.checkSignal();
-                           int chars;
-                           if ((signal == '0') || (signal == (char)255))   // 255 indicates no network available
-                           {
-                           chars = snprintf(lstr, 100, "No Signal");
-                           } else {
-                           chars = snprintf(lstr, 100, "Signal %c ", signal);
-                           if ( chars >= 100 ) lstr[100]=0; 
-                           }
-                           DebugMsg::msg("CC",'I',lstr);
-                           */
-                        DebugMsg::msg("CC",'I',"SIG-OK");
-
-                        /*          
-                        // Check if anything is available from the sat modem
-                        if ( _satModem.checkIncomingMsg() )  // Update will return true if there is a message to be processed (\r\n)
-                        {
-                        Serial.println(_satModem._receivedCmd);
-                        }
-                        */          
-
-                        if ( SatQueue::getInstance().isMsgAvail() ) // Got a  message that needs to be sent
-                        {
-                                SatQueue & q = SatQueue::getInstance();
-                                int i;
-                                char buf[20];
-                                memset(sbuf, 0, sizeof(sbuf));
-                                LongMsg msg;
-                                q.read(msg);
-
-                                //DebugMsg::msg("SC",'I'," sizeof(%d)", sizeof(sbuf));
-                                int msgLen = msg.getFormattedMsg((unsigned char *)sbuf, sizeof(sbuf));
-#if 1
-                                Serial.print(F("==========--> "));
-                                for(i = 0; i < msgLen; i++) {
-                                        sprintf(buf, "%x ", sbuf[i]);
-                                        Serial.print(buf);
-                                }
-                                Serial.print(msgLen);
-                                Serial.println("<--==========");
-                                _satModem.loadMOMessage((unsigned char *)sbuf, (int)msgLen);
-                                _satModem.initiateSBDSession(2000);
-
-#endif
-                        }
-
-                        _last_millis = millis();
-                }
-        }
+       
 
 
 }
