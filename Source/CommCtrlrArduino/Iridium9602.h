@@ -47,6 +47,8 @@ class Iridium9602
                 bool isModemOn(void);
                 bool isSimulatorPresent(void);
                 inline bool isMOMessageQueued(void) const { return _MOQueued; }
+                inline bool isMTMessageQueued(void) const { return _MTQueued; }
+                inline int whatIsMTMessageLength(void) const { return _MTMsgLen; }
                 inline bool isSessionActive(void) const { return _sessionInitiated; }
                 inline bool isRinging(void) const { return _bRing; }
 
@@ -163,7 +165,9 @@ class Iridium9602
                 bool _bRing;
                 bool _sessionInitiated;
                 bool _MOQueued;
-                int _MTQueued;
+                bool _MTQueued;
+    			int  _MTMsgLen;
+                int  _GSSQueued;
                 unsigned long _lastSessionTime;
                 bool _lastSessionResult;
 };

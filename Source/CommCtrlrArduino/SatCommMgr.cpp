@@ -46,6 +46,7 @@ void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
 void SatCommMgr::update(void)
 {
         bool initiate_session = false;
+        volatile unsigned char uplinkMsg[10];
 
 #if 1
         static unsigned long _last_tick = millis();
@@ -60,6 +61,11 @@ void SatCommMgr::update(void)
         //DebugMsg::msg_P("CC", 'D', PSTR("Before poll()"));
         _satModem.pollUnsolicitedResponse(200);
         //DebugMsg::msg_P("CC", 'D', PSTR("After poll()"));
+        
+        if (_satModem.isMTMessageQueued()) {  //Inbound Message queued waiting in sat modem
+        			unsigned char uplinkMsg[10];
+					_satModem.retrieveMsg(uplinkMsg, _satModem.whatIsMTMessageLength());
+				}
 
         if (!_satModem.isMOMessageQueued()) {
                 /* nothing in the MO queue, reset retryTimeIdx */

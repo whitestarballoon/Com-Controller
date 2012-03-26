@@ -33,7 +33,8 @@ void Iridium9602::initModem()
         _bRing = false;
         _sessionInitiated = false;
         _MOQueued = false;
-        _MTQueued = 0;
+        _MTQueued = false;
+        _MTMsgLen = 0;
         _lastSessionTime = 0;
         _lastSessionResult = 1;
 
@@ -184,20 +185,24 @@ void Iridium9602::parseUnsolicitedResponse(char * cmd)
                     DebugMsg::msg_P("Sat", 'D', PSTR("Got good +SBDIX respponse"));
                     DebugMsg::msg_P("Sat", 'D', PSTR("  mo_st: %d mt_st: %d mt_len: %d mt_queue: %d"),
                                     mo_st, mt_st, mt_len, mt_q);
-                    /* update count */
-                    _MTQueued = mt_q;
+                    
+                    if (mt_st == 1) {  // Received message if 1
+                    	_MTQueued = true;
+                    	_MTMsgLen = mt_len;
+                    	
+                    }
+                    /* update count stored at GSS */
+                    _GSSQueued = mt_q;
                 }
 
 
                 clearIncomingMsg();
                 expectPrefix(F("OK"), satResponseTimeout);
                 _sessionInitiated = false;
-
+    
 
                 if (_MOQueued && 
-                    (mo_st == 0 ||
-                     mo_st == 1 ||
-                     mo_st == 2)) {
+                    (mo_st >= 0) && (mo_st <= 4)) {   //4 or less indicates sent success
                         _lastSessionResult = 1;
                         /* clear out the MO queue since message was sent */
                         sendCommandandExpectPrefix("AT+SBDD0", "OK", satResponseTimeout);
@@ -456,7 +461,7 @@ bool Iridium9602::setIndicatorReporting(bool bEnable)
 
 int Iridium9602::getMessageWaitingCount(void)
 {
-        return _MTQueued;
+        return _GSSQueued;
 }
 
 int Iridium9602::retrieveMsg(unsigned char * msg, int msg_sz)
