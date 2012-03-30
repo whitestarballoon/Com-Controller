@@ -56,7 +56,7 @@ const unsigned int satSBDIXResponseLost = 30000;     // (ms) How much time to wa
 /* (ms) Force initiate SBD session after period of no activity i
  * currently set to 120 minutes 
  */
-const unsigned long satForceSBDSessionInterval = 120 * 60 * 1000; 
+const unsigned long satForceSBDSessionInterval = (120UL * 60UL * 1000UL); 
 
 /*******************************
  *   I2C Incoming Queue

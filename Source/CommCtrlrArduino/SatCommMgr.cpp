@@ -74,7 +74,7 @@ void SatCommMgr::update(void)
 
         if (_satModem.networkStateChanged() && _satModem.isSatAvailable()) {
                 DebugMsg::msg_P("CC", 'D',  PSTR("Modem just became available"));
-                initiate_session = true;
+                //initiate_session = true;  // This shouldn't be enabled here, delete line and this comment if things work Ok.
                 /* reset out retry array index */
                 _retryTimeIdx = 0;
         }
@@ -122,7 +122,7 @@ void SatCommMgr::update(void)
                 }
                 
                 /* check if maximum time between session has passed */
-                if (!initiate_session && millis() - _lastSessionTime  > satForceSBDSessionInterval) {
+                if (!initiate_session && ((millis() - _lastSessionTime)  > satForceSBDSessionInterval)) {
                         DebugMsg::msg_P("CC", 'D', PSTR("force SBD session"));
                         initiate_session = 1;
                         _lastSessionTime = millis();
