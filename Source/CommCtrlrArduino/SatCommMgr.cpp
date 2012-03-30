@@ -156,17 +156,22 @@ void SatCommMgr::update(void)
 
                 //DebugMsg::msg("SC",'I'," sizeof(%d)", sizeof(sbuf));
                 int msgLen = msg.getFormattedMsg((unsigned char *)sbuf, sizeof(sbuf));
+                if (msgLen > 0) {
 #if 1
-                Serial.print(F("Message Placed in MOQ ==--> "));
-                for(i = 0; i < msgLen; i++) {
-                        sprintf(buf, "%x ", sbuf[i]);
-                        Serial.print(buf);
-                }
-                Serial.print(msgLen);
-                Serial.println("<--==========");
-#endif
-                _satModem.loadMOMessage((unsigned char *)sbuf, (int)msgLen);
-
+					Serial.print(F("Message to place in 9602 MOQ ==--> "));
+					for(i = 0; i < msgLen; i++) {
+							sprintf(buf, "%x ", sbuf[i]);
+							Serial.print(buf);
+					}
+					Serial.print(msgLen);
+					Serial.println("<--==========");
+	#endif
+					_satModem.loadMOMessage((unsigned char *)sbuf, (int)msgLen);
+					Serial.println(F("Message loaded in MOQ."));
+				} else 
+				{
+					DebugMsg::msg_P("SC",'E', PSTR("Message read failed with error#: %d "), (char)msgLen);
+				}
         }
 
         return;

@@ -31,8 +31,9 @@ private:
         unsigned int _StartAddr;
         unsigned int _EndAddr;
 		
-        byte I2CeePROMRead(byte device, unsigned int addr);
+        int I2CeePROMRead(byte device, unsigned int addr);
 };
 
 #endif
+
 

@@ -48,9 +48,21 @@ int LongMsg::getFormattedMsg(unsigned char * data, int data_sz)
 
         for (unsigned int iAddr = _StartAddr ; iAddr <= _EndAddr ; iAddr++, i++)
         {
-                data[i] = I2CeePROMRead( i2ceePROMAddr, iAddr);
+        	int FromEEPROM = I2CeePROMRead( i2ceePROMAddr, iAddr);
+        	    if (-1 < FromEEPROM){ 
+                	data[i] = FromEEPROM;
+                } else {
+#ifdef __WS_DEBUG
+        DebugMsg::msg_P("LM", 'E', PSTR("FAILED TO READ ALL EEPROM BYTES, ABORTING."));
+#endif                
+                return -1; //eeprom read failed to get every byte, so do not continue processing this message.
+                }
         }
-        return getFormattedLength();
+        
+#ifdef __WS_DEBUG
+        DebugMsg::msg_P("LM", 'I', PSTR("Done reading message from eeprom."));
+#endif
+		return getFormattedLength();
 }
 
 boolean LongMsg::equals( LongMsg m )
@@ -58,9 +70,9 @@ boolean LongMsg::equals( LongMsg m )
         return ( m._StartAddr == _StartAddr && m._EndAddr == _EndAddr);
 }
 
-byte LongMsg::I2CeePROMRead(byte device, unsigned int addr) 
+int LongMsg::I2CeePROMRead(byte device, unsigned int addr) 
 {
-        byte   eePROMbyte,sendStatus;
+        byte  EEPROMByte,sendStatus;
         boolean i2csentStatus;  
         for (byte i = 0; i < i2cRetryLimit; i++) {
                 Wire.beginTransmission(device);         
@@ -75,21 +87,25 @@ byte LongMsg::I2CeePROMRead(byte device, unsigned int addr)
 
 
                 i2csentStatus = Wire.endTransmission();
+                delay(random(30));  //Needed to make it stop crashing? seen at http://www.arduino.cc/playground/Code/I2CEEPROM24LC512
+                
                 if (i2csentStatus != 0){
                         DebugMsg::msg_P("LM",'E', PSTR(" i2cTXErr: %d "), i2csentStatus);
                         //Random delay routine:
-                        delayMicroseconds(random(3000));
+                        delay(random(3000));
                 } 
                 else {
                         Wire.requestFrom(device,(byte)1);                          
 
 #if (ARDUINO >= 100)
-                        eePROMbyte = Wire.read();  
+                        EEPROMByte = Wire.read();  
 #else
-                        eePROMbyte = Wire.receive();  
+                        EEPROMByte = Wire.receive();  
 #endif
-                        return eePROMbyte; 
+                        return EEPROMByte; // Byte read OK
                 }
         }
+        DebugMsg::msg_P("LM",'E', PSTR("I2C Retries exceeded!"));
+        return -1; //byte NOT read ok
 }
 
