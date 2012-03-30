@@ -1,4 +1,5 @@
 #include <Wire.h>
+#include <avr/io.h>
 #include "I2CCommMgr.h"
 #include "CommCtrlrConfig.h"
 #include "DebugMsg.h"
@@ -98,6 +99,12 @@ void I2Csend(byte length) {
 void I2CCommMgr::i2cInit()
 {
   Wire.begin(i2cCommCtrlAddr);                                   // Join I2C Bus as slave
+   #define TWI_FREQ_WSBFAST 400000UL
+   #ifndef CPU_FREQ
+   	#define CPU_FREQ = 16000000UL
+   #endif
+	TWBR = ((CPU_FREQ / TWI_FREQ_WSBFAST) - 16) / 2;  // Make I2C FASTER! to 400KHz
+   
   Wire.onReceive(I2CCommMgr::i2cReceiveData);                            // Set On Receive Handler
   DebugMsg::msg_P("I2C",'I',PSTR("I2C Init Done. Addr %x"),i2cCommCtrlAddr);
 
