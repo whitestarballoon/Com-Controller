@@ -48,6 +48,9 @@ int LongMsg::getFormattedMsg(unsigned char * data, int data_sz)
 
         for (unsigned int iAddr = _StartAddr ; iAddr <= _EndAddr ; iAddr++, i++)
         {
+#ifdef __WS_DEBUG
+        	Serial.print(",");
+#endif 
         	int FromEEPROM = I2CeePROMRead( i2ceePROMAddr, iAddr);
         	    if (-1 < FromEEPROM){ 
                 	data[i] = FromEEPROM;
