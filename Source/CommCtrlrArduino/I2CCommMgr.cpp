@@ -104,7 +104,7 @@ void I2CCommMgr::i2cInit()
 #ifndef CPU_FREQ
 #define CPU_FREQ = 16000000UL
 #endif
-  TWBR = ((CPU_FREQ / TWI_FREQ_WSBFAST) - 16) / 2;  // Make I2C FASTER! to 400KHz
+  //TWBR = ((CPU_FREQ / TWI_FREQ_WSBFAST) - 16) / 2;  // Make I2C FASTER! to 400KHz
 
   Wire.onReceive(I2CCommMgr::i2cReceiveData);                            // Set On Receive Handler
   DebugMsg::msg_P("I2C",'I',PSTR("I2C Init Done. Addr %x"),i2cCommCtrlAddr);
