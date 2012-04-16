@@ -33,7 +33,7 @@ void Iridium9602::initModem()
         _bRing = false;
         _sessionInitiated = false;
         _MOQueued = false;
-        _MTQueued = false;
+        _MTQueued = 0;
         _MTMsgLen = 0;
         _lastSessionTime = 0;
         _lastSessionResult = 1;
@@ -187,7 +187,7 @@ void Iridium9602::parseUnsolicitedResponse(char * cmd)
                                     mo_st, mt_st, mt_len, mt_q);
                     
                     if (mt_st == 1) {  // Received message if 1
-                    	_MTQueued = true;
+                    	_MTQueued = mt_q + 1;
                     	_MTMsgLen = mt_len;
                     	
                     }
@@ -464,9 +464,61 @@ int Iridium9602::getMessageWaitingCount(void)
         return _GSSQueued;
 }
 
-int Iridium9602::retrieveMsg(unsigned char * msg, int msg_sz)
+unsigned char Iridium9602::wait_read(void)
 {
-        return 0;
+
+        while (!_HardwareSerial.available()) 
+                ;
+                
+        _HardwareSerial.read();
+}
+
+int Iridium9602::loadMTMessage(unsigned char * msg, int msg_sz)
+{
+        unsigned char inChar = 0;
+        int br = 0; /* bytes read */
+        unsigned long checksum = 0;
+        unsigned long checksum_from_modem = 0;
+        unsigned long msgLen = 0;
+
+        sendCommand("AT+SBDRB");
+
+        msgLen = (inChar = wait_read()) << 8;
+        DebugMsg::msg_P("SAT", 'D', PSTR("1 = %x"), inChar);
+        msgLen = (inChar |= _HardwareSerial.read());
+        DebugMsg::msg_P("SAT", 'D', PSTR("2 = %x"), inChar);
+
+        DebugMsg::msg_P("SAT",'D',PSTR("msgLen = %d."), msgLen);
+
+        while (br < msgLen) {
+                inChar = _HardwareSerial.read();
+                /* ignore white space chars at start of line */
+                DebugMsg::msg_P("SAT", 'D', PSTR("3 = %x"), inChar);
+                msg[br++] = inChar;
+                checksum += inChar;
+        }
+
+        DebugMsg::msg_P("SAT",'D',PSTR("ck = %X."), checksum);
+
+        checksum_from_modem = (inChar = _HardwareSerial.read()) << 8;
+        DebugMsg::msg_P("SAT", 'D', PSTR("4 = %x"), inChar);
+        DebugMsg::msg_P("SAT",'D',PSTR("cksm = %X."), checksum_from_modem);
+
+        checksum_from_modem |= (inChar = _HardwareSerial.read());
+        DebugMsg::msg_P("SAT", 'D', PSTR("5 = %x"), inChar);
+        DebugMsg::msg_P("SAT",'D',PSTR("cksm = %X."), checksum_from_modem);
+
+        sendCommandandExpectPrefix("AT+SBDD1", "OK", satResponseTimeout);
+        
+        if (checksum_from_modem != checksum) {
+                DebugMsg::msg_P("SAT",'E',PSTR("calculated check sum (%X) != modem check sum (%X)"),
+                                checksum, checksum_from_modem);
+                br = 0;
+        }
+
+        _MTMsgLen = 0;
+        _MTQueued--; 
+        return br;
 }
 
 bool Iridium9602::isSatAvailable(void)
@@ -595,7 +647,6 @@ bool Iridium9602::initiateSBDSession(unsigned long timeout)
         ret = sendCommandandExpectPrefix(F("AT+SBDIX"), F("OK"), timeout);
         _sessionInitiated = true;
         _bRing = false;
-        ret = true;
 
 out:
         return ret;

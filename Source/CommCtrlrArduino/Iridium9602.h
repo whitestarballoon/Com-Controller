@@ -47,7 +47,7 @@ class Iridium9602
                 bool isModemOn(void);
                 bool isSimulatorPresent(void);
                 inline bool isMOMessageQueued(void) const { return _MOQueued; }
-                inline bool isMTMessageQueued(void) const { return _MTQueued; }
+                inline bool isMTMessageQueued(void) const { return _MTQueued > 0; }
                 inline int whatIsMTMessageLength(void) const { return _MTMsgLen; }
                 inline bool isSessionActive(void) const { return _sessionInitiated; }
                 inline bool isRinging(void) const { return _bRing; }
@@ -136,7 +136,7 @@ class Iridium9602
                  * If msg is not big enough function will return -1 and will
                  * not do anything else.
                  */
-                int retrieveMsg(unsigned char * msg, int msg_sz);
+                int loadMTMessage(unsigned char * msg, int msg_sz);
 
                 inline const char * get_receivedCmd(void) const { return _receivedCmd; }
 
@@ -151,6 +151,8 @@ class Iridium9602
                 
 
         private:
+                unsigned char wait_read(void);
+
                 bool expectLoop(const void * response,
                                 unsigned long timeout,
                                 bool clear_received,
@@ -165,7 +167,7 @@ class Iridium9602
                 bool _bRing;
                 bool _sessionInitiated;
                 bool _MOQueued;
-                bool _MTQueued;
+                int _MTQueued;
     			int  _MTMsgLen;
                 int  _GSSQueued;
                 unsigned long _lastSessionTime;

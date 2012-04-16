@@ -12,7 +12,7 @@
 #define SatDebug
 
 static unsigned long retry_timeouts[] = {1000L,5000L,3000L,30000L,30000L};
-static unsigned int retry_timeouts_sz = sizeof(retry_timeouts) / sizeof(retry_timeouts[0]);
+static int retry_timeouts_sz = sizeof(retry_timeouts) / sizeof(retry_timeouts[0]);
 static unsigned char sbuf[satMessageCharBufferSize];
 
 SatCommMgr::SatCommMgr(Iridium9602& sModem):_satModem(sModem), _last_millis(0)
@@ -30,7 +30,7 @@ void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
         _satModem.initModem();
         _i2cCommMgr = i2cCommMgr;
         DebugMsg::msg_P("SAT",'I',PSTR("SatModem Init Completed."));
-#if 0
+#if 1
   {
     
     snprintf((char *)sbuf, 6, "hello");
@@ -46,7 +46,7 @@ void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
 void SatCommMgr::update(void)
 {
         bool initiate_session = false;
-        volatile unsigned char uplinkMsg[10];
+        unsigned char uplinkMsg[10];
 
 #if 1
         static unsigned long _last_tick = millis();
@@ -62,11 +62,6 @@ void SatCommMgr::update(void)
         _satModem.pollUnsolicitedResponse(200);
         //DebugMsg::msg_P("CC", 'D', PSTR("After poll()"));
         
-        if (_satModem.isMTMessageQueued()) {  //Inbound Message queued waiting in sat modem
-        			unsigned char uplinkMsg[10];
-					_satModem.retrieveMsg(uplinkMsg, _satModem.whatIsMTMessageLength());
-				}
-
         if (!_satModem.isMOMessageQueued()) {
                 /* nothing in the MO queue, reset retryTimeIdx */
                 _retryTimeIdx = 0;
@@ -140,7 +135,21 @@ void SatCommMgr::update(void)
 #endif
 
                 if (initiate_session && !_satModem.isSessionActive()) {
-                        _satModem.initiateSBDSession(satResponseTimeout);
+                       if (!_satModem.initiateSBDSession(satResponseTimeout)) {
+                               /* force the time to now if no response was received before the timeout */
+                               _lastSessionTime = millis();
+                       }
+                }
+        }
+
+        /* check for incoming data */
+        if (_satModem.isMTMessageQueued()) {
+                int sz; 
+                sz = _satModem.loadMTMessage(uplinkMsg, sizeof(uplinkMsg));
+                if (sz > 0) {
+                        parseIncommingMsg(uplinkMsg, sz);
+                } else {
+                        DebugMsg::msg_P("CC", 'D', PSTR("loadMTMessage() returned = %d"), sz);
                 }
         }
 
@@ -158,25 +167,21 @@ void SatCommMgr::update(void)
                 int msgLen = msg.getFormattedMsg((unsigned char *)sbuf, sizeof(sbuf));
                 if (msgLen > 0) {
 #if 1
-					Serial.print(F("Message to place in 9602 MOQ ==--> "));
-					for(i = 0; i < msgLen; i++) {
-							sprintf(buf, "%x ", sbuf[i]);
-							Serial.print(buf);
-					}
-					Serial.print(msgLen);
-					Serial.println("<--==========");
-	#endif
-					_satModem.loadMOMessage((unsigned char *)sbuf, (int)msgLen);
-					Serial.println(F("Message loaded in MOQ."));
-				} else 
-				{
-					DebugMsg::msg_P("SC",'E', PSTR("Message read failed with error#: %d "), (char)msgLen);
-				}
+                        Serial.print(F("Message to place in 9602 MOQ ==--> "));
+                        for(i = 0; i < msgLen; i++) {
+                                sprintf(buf, "%x ", sbuf[i]);
+                                Serial.print(buf);
+                        }
+                        Serial.print(msgLen);
+                        Serial.println("<--==========");
+#endif
+                        _satModem.loadMOMessage((unsigned char *)sbuf, (int)msgLen);
+                        Serial.println(F("Message loaded in MOQ."));
+                } else 
+                {
+                        DebugMsg::msg_P("SC",'E', PSTR("Message read failed with error#: %d "), (char)msgLen);
+                }
         }
-
-        return;
-       
-
 
 }
 
@@ -204,6 +209,14 @@ void SatCommMgr::turnModemOff()
 
 void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int packLen)
 {
+        int i = 0;
+
+        Serial.print(F("Message from 9602 MTQ ==--> "));
+        for(i = 0; i < packLen; i++) {
+                char buf[5];
+                sprintf(buf, "%x ", packetBufferLocal[i]);
+                Serial.print(buf);
+        }
 #if 0
 	/*
 	//Check that message type is correct:
