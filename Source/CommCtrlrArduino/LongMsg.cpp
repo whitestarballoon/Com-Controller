@@ -77,7 +77,8 @@ int LongMsg::I2CeePROMRead(byte device, unsigned int addr)
 {
         byte  EEPROMByte,sendStatus;
         boolean i2csentStatus;  
-        for (byte i = 0; i < i2cRetryLimit; i++) {
+        for (byte i = 0; i < i2cRetryLimit; i++) 
+        {
                 Wire.beginTransmission(device);         
 
 #if (ARDUINO >= 100)
@@ -97,7 +98,8 @@ int LongMsg::I2CeePROMRead(byte device, unsigned int addr)
                         //Random delay routine:
                         delay(random(3000));
                 } 
-                else {
+                else 
+                {
                         Wire.requestFrom(device,(byte)1);                          
 
 #if (ARDUINO >= 100)
@@ -107,7 +109,7 @@ int LongMsg::I2CeePROMRead(byte device, unsigned int addr)
 #endif
                         return EEPROMByte; // Byte read OK
                 }
-        }
+        	}
         DebugMsg::msg_P("LM",'E', PSTR("I2C Retries exceeded!"));
         return -1; //byte NOT read ok
 }

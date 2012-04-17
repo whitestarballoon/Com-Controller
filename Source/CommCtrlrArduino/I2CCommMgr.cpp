@@ -23,8 +23,9 @@ _satCommMgr(satCommMgr)
 //I2CMaxRetries should probably be no more than 10 as each retry delay will increase exponentially.
 int I2CCommMgr::I2CXmit(byte device, byte command, byte* data, int length)
 {
-
+  
   int sentStatus;
+  wdtrst();
   // Transmit over I2C
   for (unsigned int i = 1; i < i2cRetryLimit; i++) 
   {
@@ -59,6 +60,7 @@ int I2CCommMgr::I2CXmitMsg(byte device, byte* data, int length)
 {
 
   int sentStatus;
+  wdtrst();
   // Transmit over I2C
   for (unsigned int i = 1; i < i2cRetryLimit; i++) 
   {
@@ -99,6 +101,7 @@ void I2Csend(byte length) {
 
 void I2CCommMgr::i2cInit()
 {
+  wdtrst();
   Wire.begin(i2cCommCtrlAddr);                                   // Join I2C Bus as slave
 #define TWI_FREQ_WSBFAST 400000UL
 #ifndef CPU_FREQ
@@ -118,7 +121,7 @@ void I2CCommMgr::i2cReceiveData(int wireDataLen)
 {
   int i=0,dataArraySize;
   I2CMsg i2cMsg;
-
+	wdtrst();
 
   // Check to see if the I2C messsage is too big to handle if so throw it away
   if ((wireDataLen -1) > i2cMaxDataLen) {
@@ -174,7 +177,7 @@ void I2CCommMgr::i2cReceiveData(int wireDataLen)
  */
 void I2CCommMgr::update()
 {
-
+  wdtrst();
   if (  I2CQueue::getInstance().count() > 0)  // Got a message that needs processing
   {
     I2CParse( I2CQueue::getInstance().read());
@@ -186,6 +189,7 @@ void I2CCommMgr::update()
 
 void I2CCommMgr::I2CParse(I2CMsg i2cMsg)
 {
+ wdtrst();
 #if 0
   //DebugMsg::msg_P("I2C",'I',PSTR("I2C Parse"));
   DebugMsg::msg("I2C",'I',("i2c Packet Rx'd. Cmd: %0x Data V "),i2cMsg.i2cRxCommand);

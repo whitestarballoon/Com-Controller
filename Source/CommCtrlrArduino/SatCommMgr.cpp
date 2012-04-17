@@ -27,10 +27,13 @@ SatCommMgr::SatCommMgr(Iridium9602& sModem):_satModem(sModem), _last_millis(0)
 void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
 {
         DebugMsg::msg_P("SAT",'D',PSTR("SatModem Init Start..."));
+        wdtrst();
         _satModem.initModem();
+        wdtrst();
         _i2cCommMgr = i2cCommMgr;
+        wdtrst();
         DebugMsg::msg_P("SAT",'I',PSTR("SatModem Init Completed."));
-#if 1
+#if 0
   {
     
     snprintf((char *)sbuf, 6, "hello");
@@ -47,7 +50,7 @@ void SatCommMgr::update(void)
 {
         bool initiate_session = false;
         unsigned char uplinkMsg[10];
-
+		wdtrst();
 #if 1
         static unsigned long _last_tick = millis();
         if (millis() - _last_tick > 10000UL) {
@@ -57,11 +60,11 @@ void SatCommMgr::update(void)
                 _last_tick = millis();
         }
 #endif
-
+		wdtrst();
         //DebugMsg::msg_P("CC", 'D', PSTR("Before poll()"));
         _satModem.pollUnsolicitedResponse(200);
         //DebugMsg::msg_P("CC", 'D', PSTR("After poll()"));
-        
+        wdtrst();
         if (!_satModem.isMOMessageQueued()) {
                 /* nothing in the MO queue, reset retryTimeIdx */
                 _retryTimeIdx = 0;
@@ -73,7 +76,7 @@ void SatCommMgr::update(void)
                 /* reset out retry array index */
                 _retryTimeIdx = 0;
         }
-
+		
         if (_satModem.isSatAvailable()) {
                 //DebugMsg::msg_P("CC", 'D',  PSTR("Modem sat is available"));
                 if (_satModem.isRinging()) {
@@ -122,7 +125,7 @@ void SatCommMgr::update(void)
                         initiate_session = 1;
                         _lastSessionTime = millis();
                 }
-
+				
 #if 0
                 DebugMsg::msg_P("CC", 'D', PSTR("is: %d sa: %d, lst: %lu to: %lu tl: %lu ms: %lu"),
                                 initiate_session, 
@@ -141,7 +144,7 @@ void SatCommMgr::update(void)
                        }
                 }
         }
-
+		
         /* check for incoming data */
         if (_satModem.isMTMessageQueued()) {
                 int sz; 
@@ -152,19 +155,21 @@ void SatCommMgr::update(void)
                         DebugMsg::msg_P("CC", 'D', PSTR("loadMTMessage() returned = %d"), sz);
                 }
         }
-
+		wdtrst();
         /* now pull data from SatQueue into the MOQueue */
         if (SatQueue::getInstance().isMsgAvail()) // Got a  message that needs to be sent
         {
                 SatQueue & q = SatQueue::getInstance();
+                
                 int i;
                 char buf[20];
                 memset(sbuf, 0, sizeof(sbuf));
                 LongMsg msg;
                 q.read(msg);
-
+				wdtrst();
                 //DebugMsg::msg("SC",'I'," sizeof(%d)", sizeof(sbuf));
                 int msgLen = msg.getFormattedMsg((unsigned char *)sbuf, sizeof(sbuf));
+                wdtrst();
                 if (msgLen > 0) {
 #if 1
                         Serial.print(F("Message to place in 9602 MOQ ==--> "));
@@ -175,6 +180,7 @@ void SatCommMgr::update(void)
                         Serial.print(msgLen);
                         Serial.println("<--==========");
 #endif
+                        wdtrst();
                         _satModem.loadMOMessage((unsigned char *)sbuf, (int)msgLen);
                         Serial.println(F("Message loaded in MOQ."));
                 } else 
@@ -188,6 +194,7 @@ void SatCommMgr::update(void)
 void SatCommMgr::sendShortMsg(ShortMsg sm)
 {
         //_satModem.sendMsg(sm.getFormattedMsg(), sm.getFormattedLength());
+        //No short messages anymore!
 }
 
 void SatCommMgr::sendLongMsg(unsigned char * mstr, int len)
@@ -210,7 +217,6 @@ void SatCommMgr::turnModemOff()
 void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int packLen)
 {
         int i = 0;
-
         Serial.print(F("Message from 9602 MTQ ==--> "));
         for(i = 0; i < packLen; i++) {
                 char buf[5];
@@ -255,13 +261,14 @@ void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int
 		for (unsigned int i=packetPayloadStartIndex+3;i<packLen-2;i++) {
 			packetBufferA[i-packetPayloadStartIndex+3]=packetBufferLocal[i];  
 		}
+		
 		I2CXmit(packetBufferLocal[packetPayloadStartIndex + 1], packetBufferLocal[ + 1], packetBufferA, packLen-satIncomingMessageHeaderLength);   //Send to I2C
 		//?May want to check for I2C success status here!
 
 		//If all went well return true.
 		return true;
 	}
-
+	
 
 	//Process commands destined for the comm controller from sat modem
 	//Pass in the actual sat command packet
@@ -276,14 +283,19 @@ void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int
 	  // Determine which COMM CONTROLLER COMMAND via Satellite is being given
 	  switch (packetBufferLocal[packetPayloadStartIndex + 2]){ //Check Command Byte 
 	  case 0x06:  //Reset heartbeat timer
+	  	wdtrst();
 		CutDown::ResetTimer();
 		break;
 	  case 0x07:  //set cutdown timer to X minutes, and reset
+		wdtrst();
 		CutDown::CmdSet(packetBufferLocal[packetPayloadStartIndex + 3]);  // Send 1 byte to the cutdown command set function 
+		wdtrst();
 		satConfirmTimerCHG(packetBufferLocal[9]);
 		break;
 	  case 0x99:  // CUTDOWN NOW
+		wdtrst();
 		CutDown::CutdownNOW();
+		wdtrst();
 		break;
 	  default: 
 		; 
@@ -294,7 +306,7 @@ void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int
 	//Purpose:  Transmit a downlink message confirmation with recent TIME that the deadman timer has been reset.
 	void SatCommMgr::satConfirmTimerCHG(byte timerValue)
 	{
-
+		
 	   Serial.println(F("SatConfirmTimerCHG"));
 	   // Manual 6-byte report
 	   packetBufferS[0]= 0xFF;
