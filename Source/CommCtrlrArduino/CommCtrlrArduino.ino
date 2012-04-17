@@ -42,12 +42,12 @@ void setup()
   
    
     // Set all pins as input for bootup
-   for(int i=2;i<13;i++){
+   for(int i=2;i<53;i++){
     pinMode(i, INPUT);
    }
   
   // Disable all pullup resistors
-   for(int i=2;i<13;i++){ 
+   for(int i=2;i<53;i++){ 
     digitalWrite(i, LOW);
    } 
 
