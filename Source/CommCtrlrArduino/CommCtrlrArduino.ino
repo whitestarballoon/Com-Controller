@@ -166,8 +166,8 @@ ISR(WDT_vect) // Watchdog timer interrupt.
   //  wdtrst();                                         // take these lines out
   resetFunc();     // This will call location zero and cause a reboot.
   }
-  else                                                       // these lines should
-    Serial.println(F("Else Howdy"));                                 // be removed also
+  //else                                                       // these lines should
+    //Serial.println(F("Else Howdy"));                                 // be removed also
 }
 
 
