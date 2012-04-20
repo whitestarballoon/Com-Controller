@@ -188,11 +188,15 @@ void Iridium9602::parseUnsolicitedResponse(char * cmd)
                     
                     if (mt_st == 1) {  // Received message if 1
                     	_MTQueued = mt_q + 1;
-                    	_MTMsgLen = mt_len;
-                    	
+                    	_MTMsgLen = mt_len;	
+                    } else if ((mt_st == 2)) {
+                    	//MT message didn't transfer properly, need to start retry now
+                    
                     }
+                    
                     /* update count stored at GSS */
                     _GSSQueued = mt_q;
+                    _MTStatus = mt_st;
                 }
 
 
@@ -207,10 +211,10 @@ void Iridium9602::parseUnsolicitedResponse(char * cmd)
                         /* clear out the MO queue since message was sent */
                         sendCommandandExpectPrefix("AT+SBDD0", "OK", satResponseTimeout);
                         _MOQueued = false;
-                } else {
+                } else  {
                         _lastSessionResult = -mo_st;
                 }
-        } else if (strncmp_P(_receivedCmd, PSTR("+SBDRING"), 8) == 0) {
+        } else if (strncmp_P(_receivedCmd, PSTR("SBDRING"), 8) == 0) {
                 //DebugMsg::msg("SAT", 'D', "Match RING");
                 _bRing = true;
         } else if (strncmp_P(_receivedCmd, PSTR("+CIEV:"), 6) == 0) {
@@ -464,6 +468,12 @@ int Iridium9602::getMessageWaitingCount(void)
         return _GSSQueued;
 }
 
+int Iridium9602::getRecentMTStatus(void)
+{
+        return _MTStatus;
+}
+
+
 unsigned char Iridium9602::wait_read(void)
 {
 
@@ -644,7 +654,11 @@ bool Iridium9602::initiateSBDSession(unsigned long timeout)
 
         if (_sessionInitiated) goto out;
 
-        ret = sendCommandandExpectPrefix(F("AT+SBDIX"), F("OK"), timeout);
+        if (_bRing) {
+        	ret = sendCommandandExpectPrefix(F("AT+SBDIXA"), F("OK"), timeout);
+        } else {
+        	ret = sendCommandandExpectPrefix(F("AT+SBDIX"), F("OK"), timeout);
+        }
         _sessionInitiated = true;
         _bRing = false;
 

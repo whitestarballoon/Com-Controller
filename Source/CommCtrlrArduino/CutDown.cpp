@@ -11,6 +11,7 @@
 #include "CommCtrlrConfig.h"
 #include "CutDown.h"
 #include "DebugMsg.h"
+#include "I2CCommMgr.h"
 
 /********
  *
@@ -61,7 +62,7 @@ void CutDown::CutdownNOW()
   packetBufferS[0]=0;  //empty I2c Data
 
 //FIX vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-//I2CXmit(i2cFlightComputerAddr, 0x0F, packetBufferS, 0);//Send cutdown notice to flight computer
+ //(*i2cCommMgr).I2CXmit(i2cFlightComputerAddr, 0x0F, packetBufferS, 0);//Send cutdown notice to flight computer
 //FIX ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
   DebugMsg::msg("CD",'W',"Cutdown NOW");

@@ -44,7 +44,7 @@ private:
 
         void parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int packLen);
         void satCommCommandProc(unsigned char * packetBufferLocal);
-        void satConfirmTimerCHG(byte timerValue);
+        //void satConfirmTimerCHG(byte timerValue);
 		
 };
 

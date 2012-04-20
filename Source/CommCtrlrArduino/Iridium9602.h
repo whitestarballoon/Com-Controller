@@ -27,6 +27,7 @@ class Iridium9602
                 int checkSignal();
 
                 int getMessageWaitingCount();
+                int getRecentMTStatus();
                 /* 
                  * return the result of the last SBDI* command.
                  * 1 if last command was successfull
@@ -170,6 +171,7 @@ class Iridium9602
                 int _MTQueued;
     			int  _MTMsgLen;
                 int  _GSSQueued;
+                int _MTStatus;
                 unsigned long _lastSessionTime;
                 bool _lastSessionResult;
 };

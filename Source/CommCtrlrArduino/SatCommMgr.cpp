@@ -11,7 +11,7 @@
 
 #define SatDebug
 
-static unsigned long retry_timeouts[] = {1000L,5000L,3000L,30000L,30000L};
+static unsigned long retry_timeouts[] = {1000L,5000L,11000L,30000L,30000L};
 static int retry_timeouts_sz = sizeof(retry_timeouts) / sizeof(retry_timeouts[0]);
 static unsigned char sbuf[satMessageCharBufferSize];
 
@@ -84,11 +84,11 @@ void SatCommMgr::update(void)
                         initiate_session = true;
                 }
 
-                /* there is a message in the MO queue, but no session is active,
+                /* there is no session active,
                  * figure out if it's time to initiate a new session
                  * No need to do all of this if initiate_session is already true
                  */
-                if (!initiate_session && _satModem.isMOMessageQueued() 
+                if (!initiate_session && ((_satModem.isMOMessageQueued() || (_satModem.getRecentMTStatus() == 2) || (_satModem.isMTMessageQueued()))) 
                     && !_satModem.isSessionActive()) 
                 {
                         //DebugMsg::msg_P("CC", 'D', PSTR("checking for time out"));
@@ -141,6 +141,7 @@ void SatCommMgr::update(void)
                        if (!_satModem.initiateSBDSession(satResponseTimeout)) {
                                /* force the time to now if no response was received before the timeout */
                                _lastSessionTime = millis();
+                               _retryTimeIdx = 0; //Think this should get reset here, not sure!
                        }
                 }
         }
@@ -216,6 +217,7 @@ void SatCommMgr::turnModemOff()
 
 void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int packLen)
 {
+		byte packetBufferA[i2cMaxDataLen]; 	
         int i = 0;
         Serial.print(F("Message from 9602 MTQ ==--> "));
         for(i = 0; i < packLen; i++) {
@@ -223,26 +225,15 @@ void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int
                 sprintf(buf, "%x ", packetBufferLocal[i]);
                 Serial.print(buf);
         }
-#if 0
-	/*
-	//Check that message type is correct:
-	if ()
-	{
-		printf_P(PSTR("Invalid inbound message type"));
-		return false;
-	}
-	*/
+#if 1
+
 	
 	
 	//OK, now we know we have the correct format message
-	//Message body should start at byte packetPayloadStartIndex
+	//Message body should start at byte 2 
 	//Process this just like all other I2C commands
-
-	#ifdef satDataDebug
-		Serial.println(F("MSGOK"));
-	#endif
 	
-	/*
+/*
 	if ( satCheckForDupeCommand(packetBufferLocal[packetPayloadStartIndex]) )
 	{
 		#ifdef satDataDebug
@@ -253,22 +244,26 @@ void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int
 	*/
 	
 	//Check to see if MSG is for us - the CommCtrlr
-	if (packetBufferLocal[packetPayloadStartIndex+1] == i2cCommCtrl){
+	if (packetBufferLocal[packetPayloadStartIndex+1] == i2cCommCtrlAddr){
   		satCommCommandProc(packetBufferLocal);
 	} else {
 		//process for release onto the I2C bus
 		//Copy message body to the short temp buffer, stopping before the two checksum bytes
+		Serial.println(F("Uplink is destined for I2C Bus"));
+		Serial.print(F("Packlen: "));
+		Serial.print(packLen);
 		for (unsigned int i=packetPayloadStartIndex+3;i<packLen-2;i++) {
 			packetBufferA[i-packetPayloadStartIndex+3]=packetBufferLocal[i];  
 		}
 		
-		I2CXmit(packetBufferLocal[packetPayloadStartIndex + 1], packetBufferLocal[ + 1], packetBufferA, packLen-satIncomingMessageHeaderLength);   //Send to I2C
+		 int i2cretval = (*_i2cCommMgr).I2CXmit(packetBufferLocal[packetPayloadStartIndex + 1], packetBufferLocal[packetPayloadStartIndex + 2], packetBufferA, packLen-satIncomingMessageHeaderLength);   //Send to I2C
 		//?May want to check for I2C success status here!
-
+		Serial.print(" I2C returned: ");
+		Serial.println(i2cretval);
 		//If all went well return true.
-		return true;
+		return;
 	}
-	
+}	
 
 	//Process commands destined for the comm controller from sat modem
 	//Pass in the actual sat command packet
@@ -290,7 +285,7 @@ void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int
 		wdtrst();
 		CutDown::CmdSet(packetBufferLocal[packetPayloadStartIndex + 3]);  // Send 1 byte to the cutdown command set function 
 		wdtrst();
-		satConfirmTimerCHG(packetBufferLocal[9]);
+		//satConfirmTimerCHG(packetBufferLocal[9]);
 		break;
 	  case 0x99:  // CUTDOWN NOW
 		wdtrst();
@@ -302,11 +297,11 @@ void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int
 	  }
 	}
 
-
+/*
 	//Purpose:  Transmit a downlink message confirmation with recent TIME that the deadman timer has been reset.
 	void SatCommMgr::satConfirmTimerCHG(byte timerValue)
 	{
-		
+	   
 	   Serial.println(F("SatConfirmTimerCHG"));
 	   // Manual 6-byte report
 	   packetBufferS[0]= 0xFF;
@@ -318,7 +313,9 @@ void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int
 	   //call function to send to sat modem here
 	   
 	}
+
+	*/
 #endif
-}
+
 
 

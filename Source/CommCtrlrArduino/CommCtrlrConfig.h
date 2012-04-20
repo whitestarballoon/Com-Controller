@@ -74,8 +74,8 @@ const byte UseI2CForDebugMsgs = 0; 					// 0 == NO, !0 == Yes
 /*******************************
  *   Constants for message payload processing (set these based on headers of sat modem provider)
 ********************************/
-const byte packetPayloadStartIndex = 6;  // Message content starts here in a received packet from sat modem 6 for orbcomm, may be 0 for Iridium
-const byte satIncomingMessageHeaderLength = 15;  //Length of inbound message headers, 15 for orbcomm, may be 0 for Iridium
+const byte packetPayloadStartIndex = 0;  // Message content starts here in a received packet from sat modem 6 for orbcomm, may be 0 for Iridium
+const byte satIncomingMessageHeaderLength = 0;  //Length of inbound message headers, 15 for orbcomm, may be 0 for Iridium
 const byte i2cRetryLimit = 10;
 const unsigned int satMessageCharBufferSize = 340;  //Char array size for loading messages from eeprom into
 
