@@ -11,6 +11,7 @@
 
 #define SatDebug
 
+extern volatile unsigned long satForceSBDSessionInterval;
 static unsigned long retry_timeouts[] = {1000L,5000L,11000L,30000L,30000L};
 static int retry_timeouts_sz = sizeof(retry_timeouts) / sizeof(retry_timeouts[0]);
 static unsigned char sbuf[satMessageCharBufferSize];
@@ -48,7 +49,7 @@ void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
 
 void SatCommMgr::update(void)
 {
-        bool initiate_session = false;
+        initiate_session = false;
         unsigned char uplinkMsg[10];
 		wdtrst();
 #if 1
@@ -247,6 +248,13 @@ void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int
 	if (packetBufferLocal[packetPayloadStartIndex+1] == i2cCommCtrlAddr){
   		satCommCommandProc(packetBufferLocal);
 	} else {
+		//check to see if this is a flight computer destined SetMaxDataTXInterval command in SECONDS
+		if ((packetBufferLocal[packetPayloadStartIndex+1] == i2cFlightComputerAddr) && (packetBufferLocal[packetPayloadStartIndex+2] == (0x0A))){
+			//Copy the time/4 to the CommController value too for faster Mailbox checking, and convert to ms
+			satForceSBDSessionInterval = 1000UL * (word(packetBufferLocal[packetPayloadStartIndex + 3],packetBufferLocal[packetPayloadStartIndex + 4])/4);
+			Serial.print(F("SetMaxSBDInterval to: "));
+			Serial.println(satForceSBDSessionInterval,DEC);
+		}
 		//process for release onto the I2C bus
 		//Copy message body to the short temp buffer, stopping before the two checksum bytes
 		Serial.println(F("Uplink is destined for I2C Bus"));

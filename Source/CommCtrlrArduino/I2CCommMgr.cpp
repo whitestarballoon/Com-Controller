@@ -268,6 +268,12 @@ void I2CCommMgr::I2CParse(I2CMsg i2cMsg)
       _satCommMgr.turnModemOff();
       break;
     }
+  case i2cCmdForceSatSession:
+  	{
+  	  DebugMsg::msg_P("I2C",'I',PSTR("Force Sat Session"));
+  	  _satCommMgr.initiate_session = true;
+      break;
+    }
 
   default:                                               // Ignore any command that is not in the list
     {

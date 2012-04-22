@@ -18,7 +18,9 @@ unsigned long wdResetTime = 0;
 //Why won't these work when accessed from Iridium9602::init function?!?!?!?!  FIX VVV
 volatile int NetworkAvailableJustChanged = 0;
 volatile int SatelliteNetworkAvailable = 0;
-
+ // (ms) Force initiate SBD session after period of no activity, in minutes, the first number in parenthesis
+ // Defaults to 60 minutes
+volatile unsigned long satForceSBDSessionInterval = (60UL * 60UL * 1000UL);
 
 // It turns out the WhiteStar Bus to ArduinoMega board connects I2C to the
 // old arduino pins as well as the new ArduinoMega i2c pins which means you

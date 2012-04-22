@@ -58,10 +58,6 @@ const unsigned int maxTelemLenConst = 340;          //Maximum acceptable length 
 const int LongMsgQueueLen = 20;             // Number of messages that can be in the queue to send out sat modem
 const unsigned int satResponseTimeout = 2UL * 60UL * 1000UL;       // (ms) Timeout used when waiting for response timeouts
 const unsigned int satSBDIXResponseLost = 30000;     // (ms) How much time to wait before assuming SBDIX command failed
-/* (ms) Force initiate SBD session after period of no activity i
- * currently set to 120 minutes 
- */
-const unsigned long satForceSBDSessionInterval = (120UL * 60UL * 1000UL); 
 
 /*******************************
  *   I2C Incoming Queue
@@ -96,6 +92,7 @@ const byte i2cCmdUpdateThreeNinersValue = 0x09;
 const byte i2cCmdCDNCUTDOWNNOW = 0x99;
 const byte i2cCmdSATPowerOn = 0xBB;
 const byte i2cCmdSATPowerOff = 0xAA;
+const byte i2cCmdForceSatSession = 0x20;
 
 /*******************************
  *   Internal EEPROM Locations         *
