@@ -49,7 +49,7 @@ int LongMsg::getFormattedMsg(unsigned char * data, int data_sz)
         for (unsigned int iAddr = _StartAddr ; iAddr <= _EndAddr ; iAddr++, i++)
         {
 #ifdef __WS_DEBUG
-        	Serial.print(",");
+        	
 #endif 
         	int FromEEPROM = I2CeePROMRead( i2ceePROMAddr, iAddr);
         	    if (-1 < FromEEPROM){ 
@@ -77,6 +77,7 @@ int LongMsg::I2CeePROMRead(byte device, unsigned int addr)
 {
         byte  EEPROMByte,sendStatus;
         boolean i2csentStatus;  
+		unsigned int errDel;
         for (byte i = 0; i < i2cRetryLimit; i++) 
         {
                 Wire.beginTransmission(device);         
@@ -89,19 +90,22 @@ int LongMsg::I2CeePROMRead(byte device, unsigned int addr)
                 Wire.send((int)(addr & 0xFF));                         // and the right
 #endif
 
-
+				Serial.print("-");
                 i2csentStatus = Wire.endTransmission();
-                delay(random(30));  //Needed to make it stop crashing? seen at http://www.arduino.cc/playground/Code/I2CEEPROM24LC512
+                Serial.print(",");
+                delay(random(20,40));  //Needed to make it stop crashing? seen at http://www.arduino.cc/playground/Code/I2CEEPROM24LC512
                 
                 if (i2csentStatus != 0){
-                        DebugMsg::msg_P("LM",'E', PSTR(" i2cTXErr: %d "), i2csentStatus);
-                        //Random delay routine:
-                        delay(random(3000));
+                		
+                		errDel = random(((i-1)*(i-1)*100),(i*i*100));  //Delay for a random time between (i-1)^2*100 millis i^2*100 millis
+                        DebugMsg::msg_P("LM",'E', PSTR(" i2cTXErr: %d Delaying for %d ms"), i2csentStatus, errDel);
+                        delay(errDel);
                 } 
                 else 
                 {
+                Serial.print("|");
                         Wire.requestFrom(device,(byte)1);                          
-
+				
 #if (ARDUINO >= 100)
                         EEPROMByte = Wire.read();  
 #else
