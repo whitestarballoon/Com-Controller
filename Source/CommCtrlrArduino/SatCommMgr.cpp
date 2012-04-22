@@ -256,7 +256,7 @@ void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int
 			packetBufferA[i-packetPayloadStartIndex+3]=packetBufferLocal[i];  
 		}
 		
-		 int i2cretval = (*_i2cCommMgr).I2CXmit(packetBufferLocal[packetPayloadStartIndex + 1], packetBufferLocal[packetPayloadStartIndex + 2], packetBufferA, packLen-satIncomingMessageHeaderLength);   //Send to I2C
+		 int i2cretval = (*_i2cCommMgr).I2CXmit(packetBufferLocal[packetPayloadStartIndex + 1], packetBufferLocal[packetPayloadStartIndex + 2], packetBufferA, packLen-satIncomingMessageHeaderLength-1);   //Send to I2C
 		//?May want to check for I2C success status here!
 		Serial.print(" I2C returned: ");
 		Serial.println(i2cretval);
