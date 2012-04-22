@@ -206,23 +206,8 @@ void I2CCommMgr::I2CParse(I2CMsg i2cMsg)
 
   case i2cCmdSATTXATCRpt: 
     { 
-      DebugMsg::msg_P("I2C",'I',PSTR("Store ATC Rpt"));
-      /*
-#if 0
-       //Store Latest position and Epoch Time for later use
-       latestPosition[0]=i2cdata[i2cSel][6];  //lat0
-       latestPosition[1]=i2cdata[i2cSel][7];  //lat1
-       latestPosition[2]=i2cdata[i2cSel][8];  //lat2
-       latestPosition[3]=i2cdata[i2cSel][0];  //lon0
-       latestPosition[4]=i2cdata[i2cSel][1];  //lon1
-       latestPosition[5]=i2cdata[i2cSel][2];  //lon2
-       satSaveATCPkt(); //save the ATC packet to be ready to send when sat is ready to accept.
-       unsigned int epochMinutes = word((i2cMsg.i2cData[4] & B00001111),i2cMsg.i2cData[5]);  //Copy epochMinute value into ram
-       //           Lat0               Lat1               Lat2               Lon0               Lon1               Lon2               Alt
-       ShortMsg msg(i2cMsg.i2cData[6], i2cMsg.i2cData[7], i2cMsg.i2cData[8], i2cMsg.i2cData[0], i2cMsg.i2cData[1], i2cMsg.i2cData[2], 0 , epochMinutes);
-       	  SatQueue::getInstance().write(&msg);
-       #endif
-       */
+      DebugMsg::msg_P("I2C",'I',PSTR("Store ATC Rpt no function"));
+   
       break;
     } 
 
