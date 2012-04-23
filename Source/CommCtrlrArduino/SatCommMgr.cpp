@@ -21,7 +21,6 @@ SatCommMgr::SatCommMgr(Iridium9602& sModem):_satModem(sModem), _last_millis(0)
         _retryTimeIdx = 0;
         _lastSessionTime = 0;
         _lastActivityTime = 0;
-        _retryTimeIdx = 0;
         _randomizedRetryTime = 0;
 }
 
@@ -31,6 +30,7 @@ void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
         wdtrst();
         _satModem.initModem();
         wdtrst();
+        initiate_session = false;
         _i2cCommMgr = i2cCommMgr;
         wdtrst();
         DebugMsg::msg_P("SAT",'I',PSTR("SatModem Init Completed."));
@@ -49,7 +49,7 @@ void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
 
 void SatCommMgr::update(void)
 {
-        initiate_session = false;
+        
         unsigned char uplinkMsg[10];
 		wdtrst();
 #if 1
@@ -57,23 +57,19 @@ void SatCommMgr::update(void)
         if (millis() - _last_tick > 10000UL) {
                 DebugMsg::msg("TiCk", 't', 
                               (char *)(_satModem.isSatAvailable() ? "!" : "."));
-                //Serial.print((_satModem.isSatAvailable() ? "!" : "."));
                 _last_tick = millis();
         }
 #endif
 		wdtrst();
-        //DebugMsg::msg_P("CC", 'D', PSTR("Before poll()"));
         _satModem.pollUnsolicitedResponse(200);
-        //DebugMsg::msg_P("CC", 'D', PSTR("After poll()"));
         wdtrst();
         if (!_satModem.isMOMessageQueued()) {
-                /* nothing in the MO queue, reset retryTimeIdx */
+                /* nothing in the MO queue, No MT status indicated a message, no MT message queued at gateway, reset retryTimeIdx */
                 _retryTimeIdx = 0;
         }
 
         if (_satModem.networkStateChanged() && _satModem.isSatAvailable()) {
-                DebugMsg::msg_P("CC", 'D',  PSTR("Modem just became available"));
-                //initiate_session = true;  // This shouldn't be enabled here, delete line and this comment if things work Ok.
+                DebugMsg::msg_P("CC", 'D',  PSTR("Satellites just became available"));
                 /* reset out retry array index */
                 _retryTimeIdx = 0;
         }
@@ -105,7 +101,7 @@ void SatCommMgr::update(void)
                                         _retryTimeIdx++;
                                 }
                                 /*
-                                 * Setup the randomized value that we will actually use for hte
+                                 * Setup the randomized value that we will actually use for the
                                  * time out, it would be from 10-ms to maximum of what's in
                                  * the array.
                                  */
@@ -116,14 +112,14 @@ void SatCommMgr::update(void)
 #endif
                                 /* reset the counter to start from now */
                                 _lastSessionTime = millis();
-                                initiate_session = 1;
+                                initiate_session = true;
                         }
                 }
                 
                 /* check if maximum time between session has passed */
                 if (!initiate_session && ((millis() - _lastSessionTime)  > satForceSBDSessionInterval)) {
                         DebugMsg::msg_P("CC", 'D', PSTR("force SBD session"));
-                        initiate_session = 1;
+                        initiate_session = true;
                         _lastSessionTime = millis();
                 }
 				
@@ -137,12 +133,17 @@ void SatCommMgr::update(void)
                                  _randomizedRetryTime - (millis() - _lastSessionTime) : 0),
                                 millis());
 #endif
-
+				//FINALLY DO THE SBD SESSION!!
                 if (initiate_session && !_satModem.isSessionActive()) {
                        if (!_satModem.initiateSBDSession(satResponseTimeout)) {
                                /* force the time to now if no response was received before the timeout */
                                _lastSessionTime = millis();
-                               _retryTimeIdx = 0; //Think this should get reset here, not sure!
+                       }
+                       //If there were no transfer errors, reset retry time to 0
+                       if (((_satModem.lastSessionResult() >= 0) && (_satModem.lastSessionResult() <= 4)) && (_satModem.getRecentMTStatus() < 2))
+                       {
+                       		_retryTimeIdx = 0;
+                       		initiate_session = false;
                        }
                 }
         }
@@ -219,7 +220,7 @@ void SatCommMgr::turnModemOff()
 void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int packLen)
 {
 		byte packetBufferA[i2cMaxDataLen]; 	
-        int i = 0;
+        unsigned int i = 0;
         Serial.print(F("Message from 9602 MTQ ==--> "));
         for(i = 0; i < packLen; i++) {
                 char buf[5];
