@@ -19,8 +19,8 @@ unsigned long wdResetTime = 0;
 volatile int NetworkAvailableJustChanged = 0;
 volatile int SatelliteNetworkAvailable = 0;
  // (ms) Force initiate SBD session after period of no activity, in minutes, the first number in parenthesis
- // Defaults to 60 minutes
-volatile unsigned long satForceSBDSessionInterval = (60UL * 60UL * 1000UL);
+ // Defaults to 15 minutes
+volatile unsigned long satForceSBDSessionInterval = (15UL * 60UL * 1000UL);
 
 // It turns out the WhiteStar Bus to ArduinoMega board connects I2C to the
 // old arduino pins as well as the new ArduinoMega i2c pins which means you
@@ -101,6 +101,15 @@ wdtrst();
 	}
 wdtrst();  
   satCommMgr.satCommInit(  &i2cCommMgr );
+  			//Slightly randomize the delay between SBD checks
+  			randomSeed(analogRead(10));
+  			satForceSBDSessionInterval += (random(60000)-random(60000));
+  			Serial.print(F("SetMaxSBDInterval to: "));
+  			Serial.print(satForceSBDSessionInterval,DEC);
+  			Serial.print(F(" (m:s): "));
+			Serial.print((satForceSBDSessionInterval/60000),DEC);
+			Serial.print(":");
+			Serial.println((satForceSBDSessionInterval%60000)/1000,DEC);
 wdtrst();
   DebugMsg::msg_P("CC",'I',PSTR("CommCtrlr Boot Finished."));
 
