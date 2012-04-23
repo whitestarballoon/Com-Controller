@@ -10,6 +10,7 @@
 #include <string.h>
 #include "CommCtrlrConfig.h"
 
+
 class CutDown
 {
 
@@ -26,6 +27,7 @@ private:
 };
 
 #endif
+
 
 
 

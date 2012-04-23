@@ -176,7 +176,7 @@ err_out:
 void Iridium9602::parseUnsolicitedResponse(char * cmd)
 {
         /* check time session lost timeout */
-
+		wdtrst();
         if (strncmp_P(_receivedCmd, PSTR("+SBDIX:"), 7) == 0) {
                 //DebugMsg::msg_P("SAT", 'D', PSTR("Match SBDIX"));
                 int mo_st = -1, mt_st, mt_len, mt_q;
@@ -184,13 +184,13 @@ void Iridium9602::parseUnsolicitedResponse(char * cmd)
                     DebugMsg::msg_P("Sat", 'D', PSTR("Got good +SBDIX respponse"));
                     DebugMsg::msg_P("Sat", 'D', PSTR("  mo_st: %d mt_st: %d mt_len: %d mt_queue: %d"),
                                     mo_st, mt_st, mt_len, mt_q);
-                    
-                    if (mt_st == 1) {  // Received message if 1
+                    wdtrst();
+                    if (mt_st == 1) {  // Received message OK if 1
                     	_MTQueued = mt_q + 1;
                     	_MTMsgLen = mt_len;	
                     } else if ((mt_st == 2)) {
-                    	//MT message didn't transfer properly, need to start retry now
-                    
+                    	//MT message didn't transfer properly, but this is taken care of by reading the MT status externally
+                        
                     }
                     
                     /* update count stored at GSS */
@@ -200,13 +200,16 @@ void Iridium9602::parseUnsolicitedResponse(char * cmd)
 
 
                 clearIncomingMsg();
+                wdtrst();
                 expectPrefix(F("OK"), satResponseTimeout);
+                wdtrst();
                 _sessionInitiated = false;
     
 
                 if (_MOQueued && 
                     (mo_st >= 0) && (mo_st <= 4)) {   //4 or less indicates sent success
                         _lastSessionResult = 1;
+                        wdtrst();
                         /* clear out the MO queue since message was sent */
                         sendCommandandExpectPrefix("AT+SBDD0", "OK", satResponseTimeout);
                         _MOQueued = false;
@@ -252,6 +255,7 @@ bool Iridium9602::expectLoop(const void * response,
                 DebugMsg::msg_P("SAT", 'D', PSTR("_rcvIdx is not 0 at start of %s"), __func__);
         }
 #endif
+		wdtrst();
         /* always run at least one loop iteration */
         do {
                 /* time left */
@@ -649,7 +653,8 @@ bool Iridium9602::initiateSBDSession(unsigned long timeout)
 #endif
         bool ret = false;
         
-
+		DebugMsg::msg_P("SAT", 'I',PSTR("Initiating SBD Session..."), _receivedCmd);
+		
         if (_sessionInitiated) goto out;
 
         if (_bRing) {

@@ -13,6 +13,8 @@
 #include "DebugMsg.h"
 #include "I2CCommMgr.h"
 
+
+
 /********
  *
  * Note, many of these repeat with for loops, for the purpose of not having to wait
@@ -61,8 +63,8 @@ void CutDown::CutdownNOW()
   String packetBufferS;
   packetBufferS[0]=0;  //empty I2c Data
 
-//FIX vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
- //(*i2cCommMgr).I2CXmit(i2cFlightComputerAddr, 0x0F, packetBufferS, 0);//Send cutdown notice to flight computer
+//FIX vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv  Need to figure out how to call the damn i2c comm manager functions here.  #$(*@#$@)(*&
+// (*i2cCommMgr).I2CXmit(i2cFlightComputerAddr, 0x0F, packetBufferS, 0);//Send cutdown notice to flight computer
 //FIX ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
   DebugMsg::msg_P("CD",'W',PSTR("Cutdown NOW"));
