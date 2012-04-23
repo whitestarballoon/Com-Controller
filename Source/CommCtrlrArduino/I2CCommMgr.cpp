@@ -35,12 +35,12 @@ int I2CCommMgr::I2CXmit(byte device, byte command, byte* data, int length)
 #else
     Wire.send(command);                                   // Put (command) on queue
 #endif
-    for (int i = 0;i < length; i++)                       // Loop to put all (data) on queue
+    for (int k = 0;k < length; k++)                       // Loop to put all (data) on queue
     {
 #if (ARDUINO >= 100)
-      Wire.write(data[i]);                                   // Put (command) on queue
+      Wire.write(data[k]);                                   // Put (command) on queue
 #else
-      Wire.send(data[i]);                                   // Put (command) on queue
+      Wire.send(data[k]);                                   // Put (command) on queue
 #endif
     }
     sentStatus = Wire.endTransmission();              // Send queue, will return status
@@ -66,12 +66,12 @@ int I2CCommMgr::I2CXmitMsg(byte device, byte* data, int length)
   {
     // Transmit over I2C
     Wire.beginTransmission(device);                      // Begin Transmission to (address)
-    for (int i = 0;i < length; i++)                       // Loop to put all (data) on queue
+    for (int k = 0;k < length; k++)                       // Loop to put all (data) on queue
     {
 #if (ARDUINO >= 100)
-      Wire.write(data[i]);                                   // Put (command) on queue
+      Wire.write(data[k]);                                   // Put (command) on queue
 #else
-      Wire.send(data[i]);                                   // Put (command) on queue
+      Wire.send(data[k]);                                   // Put (command) on queue
 #endif
     }
     sentStatus = Wire.endTransmission();              // Send queue, will return status
@@ -119,7 +119,7 @@ void I2CCommMgr::i2cInit()
 //Wire library interrupt will pass number of bytes to receive
 void I2CCommMgr::i2cReceiveData(int wireDataLen) 
 {
-  int i=0,dataArraySize;
+  int i=0;
   I2CMsg i2cMsg;
 	wdtrst();
 
@@ -206,7 +206,7 @@ void I2CCommMgr::I2CParse(I2CMsg i2cMsg)
 
   case i2cCmdSATTXATCRpt: 
     { 
-      DebugMsg::msg_P("I2C",'I',PSTR("Store ATC Rpt no function"));
+      DebugMsg::msg_P("I2C",'I',PSTR("Store ATC Rpt - no function"));
    
       break;
     } 
@@ -277,7 +277,7 @@ void I2CCommMgr::I2CParse(I2CMsg i2cMsg)
 
   default:                                               // Ignore any command that is not in the list
     {
-      DebugMsg::msg_P("I2C",'E',PSTR("Unknown Command: %0x")), i2cMsg.i2cRxCommand;
+      DebugMsg::msg_P("I2C",'E',PSTR("Unknown Command: %0x"), i2cMsg.i2cRxCommand);
     }
   }
 }

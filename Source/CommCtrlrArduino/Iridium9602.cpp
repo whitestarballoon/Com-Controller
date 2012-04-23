@@ -142,7 +142,6 @@ static bool parseSBDIXResponse(char * buf, int * mo_st, int * mt_st,
 {
         /* <MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MT queued> */
         char * p, * n = NULL;
-        int i = 0;
 
         p = buf + 7;
 
@@ -480,7 +479,7 @@ unsigned char Iridium9602::wait_read(void)
         while (!_HardwareSerial.available()) 
                 ;
                 
-        _HardwareSerial.read();
+       return _HardwareSerial.read();
 }
 
 int Iridium9602::loadMTMessage(unsigned char * msg, int msg_sz)
@@ -629,8 +628,7 @@ bool Iridium9602::loadMOMessage(unsigned char* messageArray, int messageLength)
         _HardwareSerial.println();
         if (!expectPrefix(F("0"), satResponseTimeout)) return false;
         /* we hope that we get it, 
-         * but I've seen sometime no OK. Maybe that causes the zero 
-         * byte messages?
+         * but I've seen sometime no OK.
          * */
         if (!expectPrefix(F("OK"), satResponseTimeout)) {
                 /* XXX */
