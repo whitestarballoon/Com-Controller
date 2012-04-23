@@ -28,7 +28,7 @@ void CutDown::initCutdown(HardwareSerial * sPort)
   cdn = sPort;
   boolean respondFlag = false;	
   char tempin;
-  DebugMsg::msg("CD",'I',"cdnInit.");
+  DebugMsg::msg_P("CD",'I',PSTR("cdnInit."));
   for (byte i = 0; i<10; i++) {  // Look for response
 
     (*cdn).println("!R");  //Reset deadman timer
@@ -36,14 +36,14 @@ void CutDown::initCutdown(HardwareSerial * sPort)
     if((*cdn).available()) {   // NewSoftSerial read will return -1 when nothing is received
       //A char has been returned
       tempin = (*cdn).read();
-      DebugMsg::msg("CD",'I',"Data RX: %s ( %0x )", tempin, tempin);  
+      DebugMsg::msg_P("CD",'I',PSTR("Data RX: %s ( %0x )"), tempin, tempin);  
       if ('R' == tempin) {
         respondFlag = true;
       }
     }
   }
   if (respondFlag == false) {
-    DebugMsg::msg("CD",'E',"CUTDOWN DEAD.");
+    DebugMsg::msg_P("CD",'E',PSTR("CUTDOWN DEAD."));
   }
   delay(500);
   CmdSet(250);  // Immediately set the cutdown to maximum time to give time to work
@@ -65,7 +65,7 @@ void CutDown::CutdownNOW()
  //(*i2cCommMgr).I2CXmit(i2cFlightComputerAddr, 0x0F, packetBufferS, 0);//Send cutdown notice to flight computer
 //FIX ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  DebugMsg::msg("CD",'W',"Cutdown NOW");
+  DebugMsg::msg_P("CD",'W',PSTR("Cutdown NOW"));
 }
 
 //Heartbeat reset
@@ -80,7 +80,7 @@ void CutDown::ResetTimer() {
 
 // Set deadman timer time in minutes, which also resets the timer
 void CutDown::CmdSet(unsigned char deadManTime) {
-  DebugMsg::msg("CD",'I',"Timer Set to %d Minutes.", deadManTime);
+  DebugMsg::msg_P("CD",'I',PSTR("Timer Set to %d Minutes."), deadManTime);
   
   // DO NOT TRY TO PRINT TO I2C IN THIS FUNCTION IF I2C HAS NOT YET INITIALIZED!  IT WILL FREEZE 
   //COMMCONTROLLER DURING BOOT SEQUENCE WHEN IT INITIALIZES CUTDOWN MODULE!
@@ -103,7 +103,7 @@ void CutDown::CmdSet(unsigned char deadManTime) {
 
     if((*cdn).available()) {   // NewSoftSerial read will return -1 when nothing is received
       //A char has been returned
-      DebugMsg::msg("CD",'I',"Set confirmation: %02x",(*cdn).read());
+      DebugMsg::msg_P("CD",'I',PSTR("Set confirmation: %02x"),(*cdn).read());
     }
 
   }

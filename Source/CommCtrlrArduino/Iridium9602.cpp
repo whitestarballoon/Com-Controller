@@ -215,7 +215,7 @@ void Iridium9602::parseUnsolicitedResponse(char * cmd)
                         _lastSessionResult = -mo_st;
                 }
         } else if (strncmp_P(_receivedCmd, PSTR("SBDRING"), 8) == 0) {
-                //DebugMsg::msg("SAT", 'D', "Match RING");
+                //DebugMsg::msg_P("SAT", 'D', PSTR("Match RING"));
                 _bRing = true;
         } else if (strncmp_P(_receivedCmd, PSTR("+CIEV:"), 6) == 0) {
                 //DebugMsg::msg("SAT", 'D', "Match CIEV");
@@ -674,7 +674,7 @@ bool Iridium9602::pollUnsolicitedResponse(unsigned long timeout)
                 unsigned long to = timeout - (millis() - starttime);
                 if (to == 0) to = 1;
                 if (checkIncomingCRLF(to)) {
-                        DebugMsg::msg("SAT", 'D', "Unsolicited response: %s", _receivedCmd);
+                        DebugMsg::msg_P("SAT", 'D',PSTR("Unsolicited response: %s"), _receivedCmd);
                         parseUnsolicitedResponse(_receivedCmd);
                         clearIncomingMsg();
                 }

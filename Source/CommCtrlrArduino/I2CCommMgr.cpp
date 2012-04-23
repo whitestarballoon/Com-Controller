@@ -277,7 +277,7 @@ void I2CCommMgr::I2CParse(I2CMsg i2cMsg)
 
   default:                                               // Ignore any command that is not in the list
     {
-      DebugMsg::msg("I2C",'E',"Unknown Command: %0x"), i2cMsg.i2cRxCommand;
+      DebugMsg::msg_P("I2C",'E',PSTR("Unknown Command: %0x")), i2cMsg.i2cRxCommand;
     }
   }
 }
