@@ -23,8 +23,8 @@
 
  int DebugMsg::msg(String sSource, char cLevel, char *str, ...)
  {
-   char lstr[100];
-   char lstr2[100];
+   char lstr[101];
+   char lstr2[101];
    int chars;
    Serial.print(sSource); Serial.print("-"); Serial.print(cLevel); Serial.print(" "); Serial.print( TimeKeeper::getInstance().getFormattedTime() ); Serial.print("  ");
    va_list args;
@@ -45,8 +45,8 @@
 
  int DebugMsg::msg_P(String sSource, char cLevel, char *str, ...)
  {
-   char lstr[100];
-   char lstr2[100];
+   char lstr[101];
+   char lstr2[101];
    int chars;
    Serial.print(sSource); Serial.print("-"); Serial.print(cLevel); Serial.print(" "); Serial.print( TimeKeeper::getInstance().getFormattedTime() ); Serial.print("  ");
    va_list args;
