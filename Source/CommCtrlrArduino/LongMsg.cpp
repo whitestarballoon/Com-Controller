@@ -75,7 +75,7 @@ boolean LongMsg::equals( LongMsg m )
 
 int LongMsg::I2CeePROMRead(byte device, unsigned int addr) 
 {
-        byte  EEPROMByte,sendStatus;
+        byte  EEPROMByte;
         boolean i2csentStatus;  
 		unsigned int errDel;
         for (byte i = 0; i < i2cRetryLimit; i++) 
