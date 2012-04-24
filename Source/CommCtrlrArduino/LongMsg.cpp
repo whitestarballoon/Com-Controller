@@ -7,7 +7,7 @@
 
 #include <avr/pgmspace.h>
 #include <string.h>
-#include <WSWire.h>
+#include <Wire.h>
 #include "LongMsg.h"
 #include "DebugMsg.h"
 #define __WS_DEBUG
