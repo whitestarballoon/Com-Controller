@@ -25,7 +25,6 @@ class Iridium9602
                 void flushIncomingMsg();
 
                 int checkSignal();
-                
 
                 int getMessageWaitingCount();
                 int getRecentMTStatus();
@@ -49,7 +48,6 @@ class Iridium9602
                 bool isSimulatorPresent(void);
                 inline bool isMOMessageQueued(void) const { return _MOQueued; }
                 inline bool isMTMessageQueued(void) const { return _MTQueued > 0; }
-                inline int getLatestSignal(void) const { return _signal; }
                 inline int whatIsMTMessageLength(void) const { return _MTMsgLen; }
                 inline bool isSessionActive(void) const { return _sessionInitiated; }
                 inline bool isRinging(void) const { return _bRing; }

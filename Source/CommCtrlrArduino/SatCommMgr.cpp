@@ -87,16 +87,11 @@ void SatCommMgr::update(void)
                  * No need to do all of this if initiate_session is already true
                  */
                 if (!initiate_session && ((_satModem.isMOMessageQueued() || (_satModem.getRecentMTStatus() == 2) || (_satModem.isMTMessageQueued()))) 
-                    && !_satModem.isSessionActive())
+                    && !_satModem.isSessionActive()) 
                 {
-                	
-                		
                         //DebugMsg::msg_P("CC", 'D', PSTR("checking for time out"));
-                        if (millis() - _lastSessionTime > _randomizedRetryTime) 
-                        {
-                        	if (_satModem.checkSignal() >= satMinimumSignalRequired)
-                			{
-#if 0			
+                        if (millis() - _lastSessionTime > _randomizedRetryTime) {
+#if 0
                                 DebugMsg::msg_P("CC", 'D', PSTR("[%d] = %lu --  %lu ms timeout hit"), 
                                                 _retryTimeIdx,
                                                 _randomizedRetryTime,
@@ -119,16 +114,12 @@ void SatCommMgr::update(void)
                                 /* reset the counter to start from now */
                                 _lastSessionTime = millis();
                                 initiate_session = true;
-                        	} else 
-                        	{
-                        		DebugMsg::msg_P("CC", 'D', PSTR("I want to initiate SBD session, but signal level of %d is less than %d"),_satModem.getLatestSignal(),satMinimumSignalRequired);
-                        	}
-                    	}
+                        }
                 }
                 
                 /* check if maximum time between session has passed */
                 if (!initiate_session && ((millis() - _lastSessionTime)  > satForceSBDSessionInterval)) {
-                        DebugMsg::msg_P("CC", 'D', PSTR("force SBD session, none has happened in more than %d seconds"),satForceSBDSessionInterval/1000);
+                        DebugMsg::msg_P("CC", 'D', PSTR("force SBD session"));
                         initiate_session = true;
                         _lastSessionTime = millis();
                 }
