@@ -30,8 +30,7 @@ void SatCommMgr::satCommInit(I2CCommMgr * i2cCommMgr)
         wdtrst();
         _satModem.initModem();
         wdtrst();
-        //Make sure to initiate one SBD session right off, to get registrered for rings.
-        initiate_session = true;
+        initiate_session = false;
         _i2cCommMgr = i2cCommMgr;
         wdtrst();
         DebugMsg::msg_P("SAT",'I',PSTR("SatModem Init Completed."));
@@ -254,9 +253,8 @@ void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int
 		if ((packetBufferLocal[packetPayloadStartIndex+1] == i2cFlightComputerAddr) && (packetBufferLocal[packetPayloadStartIndex+2] == (0x0A))){
 			//Copy the time/4 to the CommController value too for faster Mailbox checking, and convert to ms
 			satForceSBDSessionInterval = 1000UL * (word(packetBufferLocal[packetPayloadStartIndex + 3],packetBufferLocal[packetPayloadStartIndex + 4])/4);
-			satForceSBDSessionInterval += (random(60000)-random(60000)); 
-			Serial.print(F("SetMaxSBDInterval to (s): "));
-			Serial.println(satForceSBDSessionInterval/1000,DEC);
+			Serial.print(F("SetMaxSBDInterval to: "));
+			Serial.println(satForceSBDSessionInterval,DEC);
 		}
 		//process for release onto the I2C bus
 		//Copy message body to the short temp buffer, stopping before the two checksum bytes
