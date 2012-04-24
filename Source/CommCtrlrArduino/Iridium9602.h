@@ -36,6 +36,7 @@ class Iridium9602
                  * - errors are the response from MTST negated.
                  */
                 inline int lastSessionResult(void) const { return _lastSessionResult; }
+                inline unsigned long lastSessionTime(void) const { return _lastSessionTime; }
 
                 bool setIncommingMsgAlert(bool);
                 bool setIndicatorReporting(bool);
@@ -171,6 +172,7 @@ class Iridium9602
     			int  _MTMsgLen;
                 int  _GSSQueued;
                 int _MTStatus;
+                unsigned long _lastSessionTime;
                 bool _lastSessionResult;
 };
 

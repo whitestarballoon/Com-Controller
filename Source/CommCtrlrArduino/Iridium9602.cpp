@@ -35,6 +35,7 @@ void Iridium9602::initModem()
         _MOQueued = false;
         _MTQueued = 0;
         _MTMsgLen = 0;
+        _lastSessionTime = 0;
         _lastSessionResult = 1;
 
         Serial.println(F("Iridium9602 settling while off..."));
@@ -682,6 +683,10 @@ bool Iridium9602::pollUnsolicitedResponse(unsigned long timeout)
                 }
         } while(timeout == 0 || millis() - starttime < timeout);
 
+        if (millis() - _lastSessionTime > satSBDIXResponseLost) {
+                _sessionInitiated = false;
+                _lastSessionResult = 0;
+        }
 
         return false;
 }
