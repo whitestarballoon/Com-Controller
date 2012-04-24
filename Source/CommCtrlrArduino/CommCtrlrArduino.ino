@@ -1,7 +1,7 @@
 #define __WHITESTARBALLOON__
 #include <avr/wdt.h>
 #include "CommCtrlrConfig.h"
-#include <Wire.h>
+#include <WSWire.h>
 #include "Iridium9602.h"
 #include "TimeKeeper.h"
 #include "BaseMsg.h"
