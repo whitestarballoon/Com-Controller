@@ -1,4 +1,4 @@
-#include <Wire.h>
+#include <WSWire.h>
 #include <avr/io.h>
 #include "I2CCommMgr.h"
 #include "CommCtrlrConfig.h"
