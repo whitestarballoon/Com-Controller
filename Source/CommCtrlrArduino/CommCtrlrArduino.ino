@@ -1,7 +1,7 @@
 #define __WHITESTARBALLOON__
 #include <avr/wdt.h>
 #include "CommCtrlrConfig.h"
-#include <WSWire.h>
+#include <WSWire.h>  // Modified Wire library to add timeouts for I2C bus problems.  http://github.com/whitestarballoon/WSWireLib
 #include "Iridium9602.h"
 #include "TimeKeeper.h"
 #include "BaseMsg.h"

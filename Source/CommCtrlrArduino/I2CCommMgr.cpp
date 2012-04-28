@@ -1,4 +1,4 @@
-#include <WSWire.h>
+#include <WSWire.h> // Modified Wire library to add timeouts for I2C bus problems.  http://github.com/whitestarballoon/WSWireLib
 #include <avr/io.h>
 #include "I2CCommMgr.h"
 #include "CommCtrlrConfig.h"

@@ -1,5 +1,8 @@
 This is the White Star Balloon Comm Controller Software for Arduino. 
 
+REQUIRES the library WSWire: http://github.com/whitestarballoon/WSWireLib
+Do not use with the stock Arduino 1.0 Wire Library, or it will freeze in some I2C situations.
+
 Current hardware:
 Arduino Mega
 
