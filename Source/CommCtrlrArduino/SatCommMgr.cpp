@@ -220,7 +220,6 @@ void SatCommMgr::turnModemOff()
 
 void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int packLen)
 {
-		byte packetBufferA[i2cMaxDataLen]; 	
         unsigned int i = 0;
         Serial.print(F("Message from 9602 MTQ ==--> "));
         for(i = 0; i < packLen; i++) {
@@ -261,11 +260,13 @@ void SatCommMgr::parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int
 		//process for release onto the I2C bus
 		//Copy message body to the short temp buffer, stopping before the two checksum bytes
 		Serial.println(F("Uplink is destined for I2C Bus"));
-		Serial.print(F("Packlen: "));
+		Serial.print(F("XXXXPacklen: "));
 		Serial.print(packLen);
-		for (unsigned int i=packetPayloadStartIndex+3;i<packLen-2;i++) {
-		Serial.print(" "); Serial.print(packetBufferLocal[i],HEX); Serial.print(" ");
-			packetBufferA[i-packetPayloadStartIndex+3]=packetBufferLocal[i];  
+		for (unsigned int q=packetPayloadStartIndex+3;q<packLen-2;q++) {
+		Serial.print("-"); 
+		Serial.print(packetBufferLocal[q],HEX); 
+		Serial.print("-");
+			packetBufferA[q-packetPayloadStartIndex+3]=packetBufferLocal[q];  
 		}
 		 int i2cretval = (*_i2cCommMgr).I2CXmit(packetBufferLocal[packetPayloadStartIndex + 1], packetBufferLocal[packetPayloadStartIndex + 2], packetBufferA, packLen-4);   //Send to I2C
 		//?May want to check for I2C success status here!

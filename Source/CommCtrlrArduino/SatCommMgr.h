@@ -41,7 +41,7 @@ private:
         unsigned long _lastActivityTime;
         int _retryTimeIdx;
         unsigned long  _randomizedRetryTime;
-
+		byte packetBufferA[i2cMaxDataLen]; 
         void parseIncommingMsg(unsigned char* packetBufferLocal,unsigned int packLen);
         void satCommCommandProc(unsigned char * packetBufferLocal);
         //void satConfirmTimerCHG(byte timerValue);
