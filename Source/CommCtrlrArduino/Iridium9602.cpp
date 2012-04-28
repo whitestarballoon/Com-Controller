@@ -435,16 +435,18 @@ quick_restart:
 
 int Iridium9602::checkSignal()
 {
-#if 0
-        if (sendCommandandExpectPrefix("AT+CSQF", "+CSQF:", 3000, false)) {
-                signal = _receivedCmd[6];
+#if 1
+        if (sendCommandandExpectPrefix("AT+CSQ", "+CSQ", 50000, false)) {
+                _signal = _receivedCmd[5];
         } else {
-                signal = '\0'; // Return a null if unable to get a response
+                _signal = '\0'; // Return a null if unable to get a response
         }
 #endif
 
         return _signal;
 }
+
+
 
 bool Iridium9602::setIncommingMsgAlert(bool bEnable)
 {
