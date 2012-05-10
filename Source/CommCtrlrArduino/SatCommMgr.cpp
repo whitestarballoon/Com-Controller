@@ -70,7 +70,7 @@ void SatCommMgr::update(void)
         }
 
         if (_satModem.networkStateChanged() && _satModem.isSatAvailable()) {
-                DebugMsg::msg_P("CC", 'D',  PSTR("Satellites just became available"));
+                //DebugMsg::msg_P("CC", 'D',  PSTR("Satellites just became available"));
                 /* reset out retry array index */
                 _retryTimeIdx = 0;
         }

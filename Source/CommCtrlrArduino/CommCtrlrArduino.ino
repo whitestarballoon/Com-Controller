@@ -15,7 +15,6 @@
 
 unsigned long wdResetTime = 0;
 //These things should be later integrated properly VVVVV
-//Why won't these work when accessed from Iridium9602::init function?!?!?!?!  FIX VVV
 volatile int NetworkAvailableJustChanged = 0;
 volatile int SatelliteNetworkAvailable = 0;
  // (ms) Force initiate SBD session after period of no activity, in minutes, the first number in parenthesis

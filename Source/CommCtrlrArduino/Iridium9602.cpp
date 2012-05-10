@@ -437,9 +437,12 @@ int Iridium9602::checkSignal()
 {
 #if 1
         if (sendCommandandExpectPrefix("AT+CSQ", "+CSQ", 50000, false)) {
-                _signal = _receivedCmd[5];
+                _signal = (_receivedCmd[5] - '0');  //Convert ASCII number to integer
+    			DebugMsg::msg_P("SAT",'D',PSTR("SigCheck: %d"),_signal);
+                
         } else {
                 _signal = '\0'; // Return a null if unable to get a response
+                DebugMsg::msg_P("SAT",'D',PSTR("SigCheck: FAILED"));
         }
 #endif
 
