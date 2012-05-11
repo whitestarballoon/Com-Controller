@@ -15,7 +15,8 @@
 
 //************* Watchdog Setup ****************
 extern unsigned long wdResetTime;
-#define TIMEOUTPERIOD 120000UL             // You can make this time as long as you want,
+#define TIMEOUTPERIODs 120
+#define TIMEOUTPERIOD (TIMEOUTPERIODs* 1000UL)             // You can make this time as long as you want,
                                        // it's not limited to 8 seconds like the normal
                                        // watchdog
 #define wdtrst() wdResetTime = millis();  // This macro will reset the timer

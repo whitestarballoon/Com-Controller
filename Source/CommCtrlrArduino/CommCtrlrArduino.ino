@@ -14,7 +14,7 @@
 
 
 unsigned long wdResetTime = 0;
-//These things should be later integrated properly VVVVV
+//These things should be later integrated properly VVVVV.
 volatile int NetworkAvailableJustChanged = 0;
 volatile int SatelliteNetworkAvailable = 0;
  // (ms) Force initiate SBD session after period of no activity, in minutes, the first number in parenthesis
@@ -39,16 +39,20 @@ void(* resetFunc) (void) = 0; //declare WDReset function @ address 0
 
 void setup()
 {
-   watchdogSetup();
-    // Set all pins as input for bootup
+   wdt_reset();
+       // Set all pins as input for bootup
    for(int i=2;i<53;i++){
     pinMode(i, INPUT);
    }
-  
-  // Disable all pullup resistors
+   wdt_reset();
+     // Disable all pullup resistors
    for(int i=2;i<53;i++){ 
     digitalWrite(i, LOW);
    } 
+   watchdogSetup();
+
+  
+
 
    pinMode(A2,INPUT);
    pinMode(A3,INPUT);
@@ -165,7 +169,7 @@ WDTCSR = (1<<WDCE) | (1<<WDE);
 WDTCSR = (1<<WDIE) | (0<<WDP3) | (1<<WDP2) | (1<<WDP1) | (0<<WDP0);
 sei();
 delay(100);
-Serial.println(F("finished watchdog setup"));  // just here for testing
+//Serial.println(F("finished watchdog setup"));  // just here for testing
 }
 
 
