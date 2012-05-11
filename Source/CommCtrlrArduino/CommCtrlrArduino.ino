@@ -10,8 +10,7 @@
 #include "CutDown.h"
 #include "I2CCommMgr.h"
 #include "SatCommMgr.h"
-
-
+#include <EEPROM.h>
 
 unsigned long wdResetTime = 0;
 //These things should be later integrated properly VVVVV.
@@ -122,7 +121,7 @@ void loop()
 {
   if (firstTime){
     firstTime = false;
-    Serial.println(F("In loop waiting for Watchdog"));
+    Serial.println(F("Start main loop."));
   }
   if(millis() - wdResetTime > 2000){
     //wdtrst();  // if you uncomment this line, it will keep resetting the timer.
@@ -134,7 +133,8 @@ void loop()
   wdtrst();
   satCommMgr.update();
   wdtrst();
-
+  
+  i2cCommMgr.I2CAliveCheck();
 }
 
 

@@ -7,6 +7,7 @@
 #include "CutDown.h"
 #include "Iridium9602.h"
 #include "SatCommMgr.h"
+#include <EEPROM.h>
 
 #define i2cDebug
 /* 
@@ -19,6 +20,68 @@ I2CCommMgr::I2CCommMgr(SatCommMgr& satCommMgr):
 _satCommMgr(satCommMgr)
 {
 }
+
+//Check the I2C pins for specific freeze/lockup pattern of constant low SDA.  SDA should float high.
+// Returns true when frozen
+boolean I2CCommMgr::CheckForI2CFreeze(){
+	boolean sdaValue;
+	unsigned int icheck;
+	sdaValue = ((PIND & 0b10) >> 1);
+	
+	for (icheck=0;icheck<1000;icheck++){
+		// Look for sda to remain low all the time by ORring the bits of the last and current value.  
+		// This should show a 1 after repeated comparisons if there was ever a 1 present in that cyle.
+		sdaValue = ((PIND & 0b10) >> 1);
+		if (1 == sdaValue) {
+			//There's data action or the bus is idle and not frozen, we can leave now.
+			return false;
+		}
+		//Continue checking the bus if it's low, to see if it ever goes high.
+		wdtrst();
+		delay(10);
+		}
+	//If we get here, we've got a stuck bus
+	Serial.println(F("I2C SDA haz become stuck down."));
+	return true;
+
+}
+
+
+void I2CCommMgr::I2CAliveCheck(){
+	 byte rebootCount=0; 
+	 unsigned int countdown=TIMEOUTPERIODs;
+	 rebootCount = EEPROM.read(EPLOCI2CRebootCount);
+	 if (CheckForI2CFreeze()) {//If I2C is frozen:
+	 	if (rebootCount < i2cRebootCountMax) {  //and we haven't rebooted too many times yet, reboot:
+			
+			Serial.print(F("Going down for reboot number "));
+			Serial.print(rebootCount++);  //print and increment the rebootcount
+			EEPROM.write(EPLOCI2CRebootCount,rebootCount);  //Write new rebootcount to eeprom for next boot cycle to read
+			Serial.println(F(" in... "));
+			wdtrst();
+			while (1){
+				Serial.println(countdown--);
+				delay(1000);
+				//Watchdog timer will reboot us in this infinite while loop in about 8 seconds.
+			} 
+	 	
+		} 
+		//Have rebooted too many times! Continue checking, but not rebooting.
+		if (rebootCount=i2cRebootCountMax) {
+			//SEND A MESSAGE HOME SAYING I2C IS BORKED.
+			rebootCount++;
+			EEPROM.write(EPLOCI2CRebootCount,rebootCount);  //Write new rebootcount to eeprom for next boot cycle to read
+		}
+	 } else if (rebootCount != 0) {
+	 	//If it's just recovered, then reset the reboot counter.
+	 	rebootCount = 0;
+	 	EEPROM.write(EPLOCI2CRebootCount,rebootCount);  //Write new rebootcount to eeprom for next boot cycle to read
+	 	Serial.println(F("I2C is alive once again, carry on."));
+	 	//SEND MESSAGE HOME SAYING I2C ISN'T BORKED ANYMORE.
+	 }
+}
+
+
 
 //I2CMaxRetries should probably be no more than 10 as each retry delay will increase exponentially.
 int I2CCommMgr::I2CXmit(byte device, byte command, byte* data, int length)

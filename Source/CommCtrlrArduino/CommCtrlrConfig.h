@@ -98,6 +98,8 @@ const byte i2cCmdSATPowerOn = 0xBB;
 const byte i2cCmdSATPowerOff = 0xAA;
 const byte i2cCmdForceSatSession = 0x20;
 
+const byte i2cRebootCountMax = 5;
+
 /*******************************
  *   Internal EEPROM Locations         *
  *******************************/
@@ -105,8 +107,8 @@ const int EPLOCcmdCounterArrayStart = 2;
 const int EPLENcmdCounterArray = 76;  //76 byte array to store used received command counter numbers.
 const int EPLOCAtcReportPairArrayStart = 80;  // Arduino EEPROM location to store the latest ATC report pair
 const int EPLOCAtcReportPairArray = 12;
-
-
+const int EPLOCI2CRebootCount = 100;
+const int EPLOCLastMaxSBDDelayStart = 101;
 
 
 

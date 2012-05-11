@@ -29,7 +29,8 @@ public:
           return instance;
         }
         */
-        
+        boolean CheckForI2CFreeze();
+        void I2CAliveCheck();
         int I2CXmit(byte device, byte command, byte* data, int length);
         int I2CXmitMsg(byte device, byte* data, int length);
         void update();
@@ -42,6 +43,7 @@ private:
 };
 
 #endif
+
 
 
 
