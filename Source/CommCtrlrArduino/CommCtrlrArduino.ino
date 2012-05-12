@@ -134,7 +134,7 @@ void loop()
   satCommMgr.update();
   wdtrst();
   
-  i2cCommMgr.I2CAliveCheck();
+  //i2cCommMgr.I2CAliveCheck();
 }
 
 

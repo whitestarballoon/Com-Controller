@@ -435,6 +435,7 @@ quick_restart:
 
 int Iridium9602::checkSignal()
 {
+/*XXXX */
 #if 1
         if (sendCommandandExpectPrefix("AT+CSQ", "+CSQ", 50000, false)) {
                 _signal = (_receivedCmd[5] - '0');  //Convert ASCII number to integer
@@ -444,6 +445,8 @@ int Iridium9602::checkSignal()
                 _signal = '\0'; // Return a null if unable to get a response
                 DebugMsg::msg_P("SAT",'D',PSTR("SigCheck: FAILED"));
         }
+#else
+	_signal = 5;
 #endif
 
         return _signal;
@@ -541,10 +544,15 @@ int Iridium9602::loadMTMessage(unsigned char * msg, int msg_sz)
 
 bool Iridium9602::isSatAvailable(void)
 {
+/*XXXX */
+#if 1
         if (digitalRead(pinNA) == HIGH) 
         {
                 return true;
         } 
+#else
+	return true;
+#endif
 
         return false;
 }
