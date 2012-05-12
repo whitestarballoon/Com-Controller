@@ -59,7 +59,7 @@ const unsigned int satPowerOffMinimumTime = 2000;    //Probably 2000 millis for 
 const unsigned int maxTelemLenConst = 340;          //Maximum acceptable length of telemetry packet FROM EEPROM, set by Iridium MO max message size
 #define satNetworkNotAvailable = 255;
 const int LongMsgQueueLen = 20;             // Number of messages that can be in the queue to send out sat modem
-const unsigned long satResponseTimeout = 1UL * 60UL * 1000UL;       // (ms) Timeout used when waiting for response timeouts
+const unsigned long satResponseTimeout = 30UL * 1000UL;       // (ms) Timeout used when waiting for response timeouts
 const unsigned int satSBDIXResponseLost = 30000;     // (ms) How much time to wait before assuming SBDIX command failed
 
 

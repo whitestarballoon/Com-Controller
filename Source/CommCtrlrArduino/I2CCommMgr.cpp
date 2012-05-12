@@ -88,6 +88,7 @@ int I2CCommMgr::I2CXmit(byte device, byte command, byte* data, int length)
 {
   
   int sentStatus;
+
   wdtrst();
   // Transmit over I2C
   for (unsigned int i = 1; i < i2cRetryLimit; i++) 
@@ -114,7 +115,8 @@ int I2CCommMgr::I2CXmit(byte device, byte command, byte* data, int length)
     Serial.println(F("I2CTXERR"));
     Serial.flush();
     //If it didn't' suceed for  any reason, try again
-    delay(random(((i-1)*(i-1)*100),(i*i*100)));  //Delay for a random time between (i-1)^2*100 millis i^2*100 millis
+    //delay(random(((i-1)*(i-1)*100),(i*i*100)));  //Delay for a random time between (i-1)^2*100 millis i^2*100 millis
+    delay(random(100, 5*1000));
   }
   return sentStatus;                                   // Return Status of Transmission	
 }
