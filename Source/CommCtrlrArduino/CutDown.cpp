@@ -31,13 +31,13 @@ void CutDown::initCutdown(HardwareSerial * sPort)
   boolean respondFlag = false;	
   char tempin;
   DebugMsg::msg_P("CD",'I',PSTR("cdnInit."));
-  for (byte i = 0; i<10; i++) {  // Look for response
+  for (byte m = 0; m<10; m++) {  // Look for response
 
-    (*cdn).println("!R");  //Reset deadman timer
+    Serial2.println("!R");  //Reset deadman timer
     delay(100);
-    if((*cdn).available()) {   // NewSoftSerial read will return -1 when nothing is received
+    if(Serial2.available()) {   // NewSoftSerial read will return -1 when nothing is received
       //A char has been returned
-      tempin = (*cdn).read();
+      tempin = Serial2.read();
       DebugMsg::msg_P("CD",'I',PSTR("Data RX: %s ( %0x )"), tempin, tempin);  
       if ('R' == tempin) {
         respondFlag = true;
@@ -56,8 +56,8 @@ void CutDown::initCutdown(HardwareSerial * sPort)
 //Cut down immediately
 void CutDown::CutdownNOW()
 {
-  for (byte i = 0; i<10; i++) {
-    (*cdn).println("!CUTDOWNNOW");
+  for (byte m = 0; m<10; m++) {
+    Serial2.println("!CUTDOWNNOW");
     delay(100);
   }
   String packetBufferS;
@@ -73,7 +73,7 @@ void CutDown::CutdownNOW()
 //Heartbeat reset
 void CutDown::ResetTimer() {
   for (byte i = 0; i<10; i++) {
-    (*cdn).println("!R");
+    Serial2.println("!R");
     delay(100);
   }
   //Serial.println("cdn!R");
@@ -87,25 +87,25 @@ void CutDown::CmdSet(unsigned char deadManTime) {
   // DO NOT TRY TO PRINT TO I2C IN THIS FUNCTION IF I2C HAS NOT YET INITIALIZED!  IT WILL FREEZE 
   //COMMCONTROLLER DURING BOOT SEQUENCE WHEN IT INITIALIZES CUTDOWN MODULE!
   for (byte i = 0; i<10; i++) {
-    (*cdn).print("!T");
+    Serial2.print("!T");
     // Zero pad the value for ASCII numbers to cutdown controller
     if (deadManTime>99){
-      (*cdn).print(deadManTime,DEC);
+      Serial2.print(deadManTime,DEC);
     } 
     else if (deadManTime>9) {
-      (*cdn).print("0");
-      (*cdn).print(deadManTime,DEC);
+      Serial2.print("0");
+      Serial2.print(deadManTime,DEC);
     } 
     else {
-      (*cdn).print("00");
-      (*cdn).print(deadManTime,DEC);    
+      Serial2.print("00");
+      Serial2.print(deadManTime,DEC);    
     }
-    (*cdn).println();
+    Serial2.println();
     delay(100);
 
-    if((*cdn).available()) {   // NewSoftSerial read will return -1 when nothing is received
+    if(Serial2.available()) {   // NewSoftSerial read will return -1 when nothing is received
       //A char has been returned
-      DebugMsg::msg_P("CD",'I',PSTR("Set confirmation: %02x"),(*cdn).read());
+      DebugMsg::msg_P("CD",'I',PSTR("Set confirmation: %02x"),Serial2.read());
     }
 
   }

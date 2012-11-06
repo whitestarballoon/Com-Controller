@@ -85,6 +85,7 @@ wdtrst();
    IRIDIUM_SERIAL_PORT.begin(19200);  //Sat Modem Port
    Serial.begin(115200);	//Debug-Programming Port
    //Serial.print("Booting...\n");
+   Serial2.begin(1200);
  
  
   DebugMsg::msg_P("CC",'I',PSTR("WSB Comm Controller Reporting for Duty!"));
